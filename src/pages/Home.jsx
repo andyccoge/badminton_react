@@ -2,7 +2,7 @@ import { useState } from 'react'
 import reactLogo from '../assets/react.svg'
 import viteLogo from '/vite.svg'
 import './Home.css'
-import '../pwa.js'
+// import '../pwa.js' /*暫時關閉註冊瀏覽器通知*/
 
 function App() {
   const [count, setCount] = useState(0)
