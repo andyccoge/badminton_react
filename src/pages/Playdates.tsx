@@ -18,7 +18,7 @@ import Stack from '@mui/material/Stack';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
-import GridViewIcon from '@mui/icons-material/GridView';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import HorizontalRuleIcon from '@mui/icons-material/HorizontalRule';
 
@@ -51,7 +51,7 @@ const cards = [
 
 function Playdates() {
   /*切換顯示模式(卡塊or列表)*/
-  const [showWay, setShowWay] = React.useState('card');
+  const [showWay, setShowWay] = React.useState('list');
   const handleShowWayChange = (
     event: React.MouseEvent<HTMLElement>,
     newShowWay: string,
@@ -95,11 +95,11 @@ function Playdates() {
         <Divider className="pb-3" sx={{mb:2}}/>
         <Stack spacing={2} className='absolute bottom-0 right-0'>
           <ToggleButtonGroup size="small" {...showWayControl} aria-label="Small sizes">
-            <ToggleButton value="card" key="showWay_card">
-              <GridViewIcon/>
-            </ToggleButton>
             <ToggleButton value="list" key="showWay_list">
               <ViewListIcon/>
+            </ToggleButton>
+            <ToggleButton value="month" key="showWay_month">
+              <CalendarMonthIcon/>
             </ToggleButton>
           </ToggleButtonGroup>
         </Stack>
