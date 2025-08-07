@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 // import '../pwa.js' /*暫時關閉註冊瀏覽器通知*/
+import * as functions from '../functions.tsx'
 import AdminNav from '../components/AdminNav'
 
 import Box from '@mui/material/Box';
@@ -22,34 +23,20 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import HorizontalRuleIcon from '@mui/icons-material/HorizontalRule';
 
-const cards = [
-  {
-    "id": 4,
-    "location": "新羽力",
-    "note": "",
-    "datetime": "2025-08-05 20:00"
-  },
-  {
-    "id": 1,
-    "location": "新羽力",
-    "note": "瑄瑄會來、幫昱安慶生",
-    "datetime": "2025-07-29 20:00"
-  },
-  {
-    "id": 3,
-    "location": "銘傳國小",
-    "note": "俊偉團",
-    "datetime": "2025-07-24 20:00"
-  },
-  {
-    "id": 2,
-    "location": "雙連國小",
-    "note": "海豹約",
-    "datetime": "2025-07-19 19:00"
-  }
-];
-
 function Playdates() {
+  const [cards, setCards] = React.useState<any[]>([]);
+  React.useEffect(() => {
+    (async () => { // IIFE
+      try {
+        let result = await functions.fetchData('GET', 'play_date');
+        console.log(result.data);
+        setCards(result.data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    })(); // Call the IIFE immediately
+  }, []); // Empty dependency array ensures it runs only once on mount
+
   /*切換顯示模式(卡塊or列表)*/
   const [showWay, setShowWay] = React.useState('list');
   const handleShowWayChange = (
