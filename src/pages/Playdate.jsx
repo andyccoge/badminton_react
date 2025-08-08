@@ -5,7 +5,7 @@ import viteLogo from '/vite.svg'
 import Grid from '@mui/material/Grid'
 import BottomNavigation from '../components/BottomNavigation'
 
-function Playdate() {
+function Playdate(updateBodyBlock) {
   const [count, setCount] = useState(0)
 
   return (   

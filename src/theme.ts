@@ -32,8 +32,24 @@ export const getTheme = (mode: "light" | "dark") => createTheme({
     MuiButton:{
       styleOverrides: {
         root: ({ theme }) => ({
-          color: theme.palette.mode === 'dark' ? '#000' : '#fff',
-          backgroundColor: theme.palette.mode === 'dark' ? '#c3c3c3' : theme.palette.secondary.main,
+          '&.MuiButton-colorPrimary':{
+            color: theme.palette.mode === 'dark' ? '#000' : '#fff',
+            backgroundColor: theme.palette.mode === 'dark' ? '#c3c3c3' : theme.palette.secondary.main,
+          }
+        }),
+      }
+    },
+    MuiTextField:{
+      styleOverrides: {
+        root: ({ theme }) => ({
+          '& label:has(+ div input[type="date"]),\
+           & label:has(+ div input[type="time"])\
+          ':{
+            'transform': 'translate(12px, 4px) scale(0.75)',
+          },
+          '& input::-webkit-calendar-picker-indicator':{
+            filter: theme.palette.mode === 'dark' ? 'initial' : 'invert(1)',
+          },
         }),
       }
     },

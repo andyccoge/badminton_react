@@ -3,9 +3,10 @@ import * as React from 'react';
 // import '../pwa.js' /*暫時關閉註冊瀏覽器通知*/
 import * as functions from '../functions.tsx'
 import AdminNav from '../components/AdminNav'
+import PlayDateModel from '../components/PlayDateModel'
 
 import Box from '@mui/material/Box';
-// import CardActions from '@mui/material/CardActions';
+import CardActions from '@mui/material/CardActions';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 // import CardMedia from '@mui/material/CardMedia';
@@ -23,19 +24,35 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import HorizontalRuleIcon from '@mui/icons-material/HorizontalRule';
 
-function Playdates() {
+import Fab from '@mui/material/Fab';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import EditSquareIcon from '@mui/icons-material/EditSquare';
+
+function Playdates({updateBodyBlock}) {
   const [cards, setCards] = React.useState<any[]>([]);
   React.useEffect(() => {
-    (async () => { // IIFE
+    (async () => {
       try {
-        let result = await functions.fetchData('GET', 'play_date');
-        console.log(result.data);
-        setCards(result.data);
+        updateBodyBlock(true); //顯示遮蓋
+        await getData();
+        updateBodyBlock(false); //關閉遮蓋
       } catch (error) {
         console.error('Error fetching data:', error);
+        updateBodyBlock(true); //關閉遮蓋
       }
     })(); // Call the IIFE immediately
   }, []); // Empty dependency array ensures it runs only once on mount
+
+  const getData = async () => {
+    let result = await functions.fetchData('GET', 'play_date');
+    // console.log(result.data);
+    setCards(result.data);
+  }
+  const renewList = async (idx, item)=>{
+    cards[idx] = item;
+    setCards(cards);
+  }
 
   /*切換顯示模式(卡塊or列表)*/
   const [showWay, setShowWay] = React.useState('list');
@@ -51,7 +68,37 @@ function Playdates() {
     exclusive: true,
   };
 
-  const [selectedCard, setSelectedCard] = React.useState(0);
+  const playDateModelRef = React.useRef<{ setModel: (idx, item) => void }>(null);
+  const openPlayDateModel = (id, index) =>{
+    let tempData = index==-1 ? {} : cards[index]
+    // console.log(id+':'+index)
+    playDateModelRef.current?.setModel(index, tempData); // 呼叫 child 的方法
+  }
+
+  const viewPlayDateModel = (id, index) =>{
+    let view_url = '/playdate?id='+id
+    console.log(view_url)
+  }
+  const deletePlayDate = async (id, index) =>{
+    let tempData = cards[index];
+    if(
+      confirm(`\
+        確定刪除以下打球日？
+        日期：`+tempData.datetime+`~`+tempData.datetime2+`
+        地點：`+tempData.location+`
+        備註：`+tempData.note+`
+      `)
+    ){
+      updateBodyBlock(true);
+      let result = await functions.fetchData('DELETE', 'play_date', null, {id:id});
+      if(result.msg){
+        alert(result.msg);
+      }else{
+        await getData();
+      }
+      updateBodyBlock(false);
+    }
+  }
 
   return (   
     <>
@@ -71,10 +118,6 @@ function Playdates() {
               (備註.....)
             </Typography>
           </CardContent>
-          {/* <CardActions>
-            <Button size="small">Share</Button>
-            <Button size="small">Learn More</Button>
-          </CardActions> */}
         </Card>
       </Box>
 
@@ -108,8 +151,7 @@ function Playdates() {
             <Badge color="secondary" variant="dot" invisible={false} className='w-full'>
               <Card className='w-full'>
                 <CardActionArea
-                  onClick={() => setSelectedCard(index)}
-                  data-active={selectedCard === index ? '' : undefined}
+                  onClick={() => viewPlayDateModel(card.id, index)}
                   sx={{
                     height: '100%',
                     '&[data-active]': {
@@ -124,11 +166,11 @@ function Playdates() {
                     <Box className="flex justify-between">
                       <Box>
                         <Typography variant="h6" component="div" align='left'>
-                          {card.location}_{2}面場
+                          {card.location}_{"X"}面場
                         </Typography>
                         <Typography component="div" align='left'>
                           <Typography variant="body2" color="text.secondary" className='inline-block pr-3'>
-                            報名狀態：{10}人
+                            報名狀態：{"XXX"}人
                           </Typography>
                           {card.note?.trim() && (
                             <Typography variant="body2" color="text.secondary" className='inline-block'>
@@ -137,7 +179,7 @@ function Playdates() {
                           )}
                         </Typography>
                       </Box>
-                      <Typography variant="body1" color="text.secondary" align='right'>
+                      <Typography variant="body1" color="text.secondary" align='right' sx={{minWidth: '90px',}}>
                         {card.datetime.split(" ").map((part, index) => (
                           <React.Fragment key={index}>
                             {part}
@@ -148,11 +190,33 @@ function Playdates() {
                     </Box>
                   </CardContent>
                 </CardActionArea>
+                <CardActions className='flex justify-end' sx={{position: "relative", top: "-48px",}}>
+                  <Button size="small" 
+                          onClick={() => openPlayDateModel(card.id, index)}
+                  ><EditSquareIcon /></Button>
+                  <Button size="small" variant="contained" color='error'
+                          onClick={() => deletePlayDate(card.id, index)}
+                  ><DeleteForeverIcon /></Button>
+                </CardActions>
               </Card>
             </Badge>
           </Box>
         ))}
       </Box>
+
+      <Box className="fixed bottom-0 right-0" 
+           onClick={() => openPlayDateModel(-1,-1)}
+           sx={{ '& > :not(style)': { m: 1 } }}>
+        <Fab size="small" color="secondary" aria-label="add"
+             >
+          <AddIcon />
+        </Fab>
+      </Box>
+
+      <PlayDateModel updateBodyBlock={updateBodyBlock}
+                     reGetList={getData}
+                     renewList={renewList}
+                     ref={playDateModelRef} />
     </>
   )
 }

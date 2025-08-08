@@ -3,7 +3,7 @@ import Grid from '@mui/material/Grid'
 
 import AdminNav from '../components/AdminNav'
 
-function Users() {
+function Users(updateBodyBlock) {
   const [count, setCount] = useState(0)
 
   return (   
