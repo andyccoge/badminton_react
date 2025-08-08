@@ -4,33 +4,37 @@ import * as React from 'react';
 import * as functions from '../functions.tsx'
 import AdminNav from '../components/AdminNav'
 import PlayDateModel from '../components/PlayDateModel'
+import PlaydateCard from '../components/PlaydateCard'
 
-import Box from '@mui/material/Box';
-import CardActions from '@mui/material/CardActions';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-// import CardMedia from '@mui/material/CardMedia';
+import {Box, Grid} from '@mui/material';
+import {Card,CardContent} from '@mui/material';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import CardActionArea from '@mui/material/CardActionArea';
 import Divider from '@mui/material/Divider';
-import Badge from '@mui/material/Badge';
 
 import Stack from '@mui/material/Stack';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ViewListIcon from '@mui/icons-material/ViewList';
-import HorizontalRuleIcon from '@mui/icons-material/HorizontalRule';
+import GridViewIcon from '@mui/icons-material/GridView';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 
 import Fab from '@mui/material/Fab';
 import AddIcon from '@mui/icons-material/Add';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import EditSquareIcon from '@mui/icons-material/EditSquare';
 
 function Playdates({updateBodyBlock}) {
   const [cards, setCards] = React.useState<any[]>([]);
+  // 建立 group，每次 cards 更新都會重新建立
+  const card_group = React.useMemo(() => {
+    return cards.reduce((acc, item, index) => {
+      const dateKey = item.datetime.split(' ')[0];
+      if (!acc[dateKey]) acc[dateKey] = [];
+      acc[dateKey].push(index);
+      return acc;
+    }, {});
+  }, [cards]);
+
   React.useEffect(() => {
     (async () => {
       try {
@@ -48,6 +52,8 @@ function Playdates({updateBodyBlock}) {
     let result = await functions.fetchData('GET', 'play_date');
     // console.log(result.data);
     setCards(result.data);
+    console.log(cards)
+    console.log(card_group)
   }
   const renewList = async (idx, item)=>{
     cards[idx] = item;
@@ -100,6 +106,41 @@ function Playdates({updateBodyBlock}) {
     }
   }
 
+  const hide_alert = (datetime):boolean => {
+    let tempDate = new Date(datetime)
+    let now = new Date()
+    if(now.getTime()<=tempDate.getTime() && tempDate.getTime()<(now.getTime()+24*60*60*1000)){
+      // 開始時間在現在往後算24小時內
+      return false;
+    }
+    return true;
+  }
+  const show_weekday = (datetime):string => {
+    let tempDate = new Date(datetime)
+    let now = new Date()
+    if(tempDate.getFullYear()==now.getFullYear() && 
+        tempDate.getMonth()==now.getMonth() &&
+        tempDate.getDate()==now.getDate()
+    ){
+      return '今日';
+    }else{
+      return '星期' + ['日','一','二','三','四','五','六'][tempDate.getDay()];
+    }
+    
+  }
+  const show_date = (datetime):string => {
+    let tempDate = new Date(datetime)
+    let now = new Date()
+    if(tempDate.getFullYear()==now.getFullYear() && 
+        tempDate.getMonth()==now.getMonth() &&
+        tempDate.getDate()==now.getDate()
+    ){
+      return '即將到來';
+    }else{
+      return ' ' + (tempDate.getMonth()+1) + ' 月 ' + tempDate.getDate() + ' 號';
+    }
+  }
+
   return (   
     <>
       <header id="header_nav"><AdminNav /></header>
@@ -109,7 +150,7 @@ function Playdates({updateBodyBlock}) {
         <Card sx={{ maxWidth: 345 }}>
           <CardContent>
             <Typography gutterBottom variant="h5" component="div">
-              <Button size="large">開始排點</Button>
+              <Button size="large" onClick={getData}>開始排點</Button>
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }} align='left'>
               打球時間：YYYY-mm-dd HH:ii<br/>
@@ -128,6 +169,9 @@ function Playdates({updateBodyBlock}) {
             <ToggleButton value="list" key="showWay_list">
               <ViewListIcon/>
             </ToggleButton>
+            <ToggleButton value="card" key="showWay_card" sx={{display:{xs:'none', sm:'inline-block'}}}>
+              <GridViewIcon/>
+            </ToggleButton>
             <ToggleButton value="month" key="showWay_month">
               <CalendarMonthIcon/>
             </ToggleButton>
@@ -135,80 +179,46 @@ function Playdates({updateBodyBlock}) {
         </Stack>
       </Box>
 
-      <Box
-        sx={{
-          width: '100%',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px, 100%), 1fr))',
-          gap: 2,
-        }}
-      >
-        {cards.map((card, index) => (
-          <Box key={'play_date_card-' + index}>
-            <Typography gutterBottom variant="subtitle1" component="div" align='left'>    
-              今日 <HorizontalRuleIcon /> 即將到來
-            </Typography>
-            <Badge color="secondary" variant="dot" invisible={false} className='w-full'>
-              <Card className='w-full'>
-                <CardActionArea
-                  onClick={() => viewPlayDateModel(card.id, index)}
-                  sx={{
-                    height: '100%',
-                    '&[data-active]': {
-                      backgroundColor: 'action.selected',
-                      '&:hover': {
-                        backgroundColor: 'action.selectedHover',
-                      },
-                    },
-                  }}
-                >
-                  <CardContent sx={{ height: '100%' }}>
-                    <Box className="flex justify-between">
-                      <Box>
-                        <Typography variant="h6" component="div" align='left'>
-                          {card.location}_{"X"}面場
-                        </Typography>
-                        <Typography component="div" align='left'>
-                          <Typography variant="body2" color="text.secondary" className='inline-block pr-3'>
-                            報名狀態：{"XXX"}人
-                          </Typography>
-                          {card.note?.trim() && (
-                            <Typography variant="body2" color="text.secondary" className='inline-block'>
-                              ({card.note})
-                            </Typography>
-                          )}
-                        </Typography>
-                      </Box>
-                      <Typography variant="body1" color="text.secondary" align='right' sx={{minWidth: '90px',}}>
-                        {card.datetime.split(" ").map((part, index) => (
-                          <React.Fragment key={index}>
-                            {part}
-                            <br />
-                          </React.Fragment>
-                        ))}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </CardActionArea>
-                <CardActions className='flex justify-end' sx={{position: "relative", top: "-48px",}}>
-                  <Button size="small" 
-                          onClick={() => openPlayDateModel(card.id, index)}
-                  ><EditSquareIcon /></Button>
-                  <Button size="small" variant="contained" color='error'
-                          onClick={() => deletePlayDate(card.id, index)}
-                  ><DeleteForeverIcon /></Button>
-                </CardActions>
-              </Card>
-            </Badge>
+      <Box sx={{display:showWay=='list'?'block': 'none'}}>
+        {Object.keys(card_group).map((date, _) => (
+          <Box key={'play_date_card-'+date+'-title'}>
+            <Grid container spacing={2} sx={{mb:'1rem'}}>
+              {card_group[date].map((card_idx, index) => (
+                <Grid key={'play_date_card-'+date+'-'+index} size={{xs:12, sm:6, md:4, lg:3}} sx={{alignSelf:'end'}}>
+                  <PlaydateCard updateBodyBlock={updateBodyBlock}
+                    viewPlayDateModel={viewPlayDateModel}
+                    openPlayDateModel={openPlayDateModel}
+                    deletePlayDate={deletePlayDate}
+                    card={cards[card_idx]}
+                    index={card_idx}
+                    preDatetime={index==0 ? '' : cards[card_idx].datetime}/>
+                </Grid>
+              ))}
+            </Grid>
           </Box>
         ))}
+      </Box>
+
+      <Box sx={{display:showWay=='card'?'block': 'none'}}>
+        <Grid container spacing={2}>
+          {cards.map((card, index) => (
+            <Grid key={'play_date_card-' + index} size={{xs:12, sm:6, md:4, lg:3}} sx={{alignSelf:'end'}}>
+              <PlaydateCard updateBodyBlock={updateBodyBlock}
+                viewPlayDateModel={viewPlayDateModel}
+                openPlayDateModel={openPlayDateModel}
+                deletePlayDate={deletePlayDate}
+                card={card}
+                index={index}
+                preDatetime={index==0?'':cards[index-1].datetime}/>
+            </Grid>
+          ))}
+        </Grid>
       </Box>
 
       <Box className="fixed bottom-0 right-0" 
            onClick={() => openPlayDateModel(-1,-1)}
            sx={{ '& > :not(style)': { m: 1 } }}>
-        <Fab size="small" color="secondary" aria-label="add"
-             >
+        <Fab size="small" color="secondary" aria-label="add">
           <AddIcon />
         </Fab>
       </Box>

@@ -14,7 +14,7 @@ import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import { Link } from 'react-router-dom'
 
-const LogoIcon = '/manifest/favicon.ico.png'
+const LogoIcon = '/logo.png?20250808-1'
 
 const pages = [
   ['/','打球日管理'], 
@@ -50,7 +50,7 @@ function ResponsiveAppBar() {
         <Container maxWidth="xl">
           <Toolbar disableGutters variant="dense"
             sx={{display:'flex', justifyContent:'space-between'}}>
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }}
+            <Box sx={{ display: { xs: 'none', md: 'flex', width:'40px' }, mr: 1 }}
               component="img"
               alt="羽球排場系統"
               src={LogoIcon}
@@ -93,7 +93,7 @@ function ResponsiveAppBar() {
               </Menu>
             </Box>
 
-            <Box sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }}
+            <Box sx={{ display: { xs: 'flex', md: 'none', width:'40px' }, mr: 1 }}
               component="img"
               alt="羽球排場系統"
               src={LogoIcon}
@@ -114,7 +114,7 @@ function ResponsiveAppBar() {
             <Box sx={{ flexGrow: 0 }}>
               <Tooltip title="Open settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
+                  <Avatar alt="安安" src="/src/assets/react.svg" />
                 </IconButton>
               </Tooltip>
               <Menu

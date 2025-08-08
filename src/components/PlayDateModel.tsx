@@ -2,14 +2,9 @@ import * as functions from '../functions.tsx'
 
 import * as React from 'react';
 import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
+import {Dialog,DialogActions,DialogContent,DialogContentText,DialogTitle} from '@mui/material';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
-
 import {TextField, Stack, Grid} from '@mui/material';
 
 const Transition = React.forwardRef(function Transition(
@@ -21,13 +16,13 @@ const Transition = React.forwardRef(function Transition(
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
+export type MyChildRef = { // 子暴露方法給父
+  setModel: (idx, item) => void;
+};
 type MyChildProps = { // 父傳方法給子
   updateBodyBlock: (status) => void;
   reGetList: () => void;
   renewList: (idx, item) => void;
-};
-export type MyChildRef = { // 子暴露方法給父
-  setModel: (idx, item) => void;
 };
 
 const empty_data = {

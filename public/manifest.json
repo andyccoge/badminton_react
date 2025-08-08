@@ -10,31 +10,31 @@
   "start_url": "/index.html",
   "icons": [
     {
-    "src": "/manifest/favicon.ico.png",
+    "src": "/manifest/favicon.ico.png?20250808",
     "type": "image/png",
     "sizes": "37x37",
     "purpose": "any"
     },
     {
-    "src": "/manifest/favicon.ico-192.png",
+    "src": "/manifest/favicon.ico-192.png?20250808",
     "type": "image/png",
     "sizes": "192x192",
     "purpose": "any"
     },
     {
-    "src": "/manifest/favicon.ico-192.png",
+    "src": "/manifest/favicon.ico-192.png?20250808",
     "type": "image/png",
     "sizes": "192x192",
     "purpose": "maskable"
     },
     {
-    "src": "/manifest/favicon.ico-384.png",
+    "src": "/manifest/favicon.ico-384.png?20250808",
     "type": "image/png",
     "sizes": "384x384",
     "purpose": "maskable"
     },
     {
-    "src": "/manifest/favicon.ico-512.png",
+    "src": "/manifest/favicon.ico-512.png?20250808",
     "type": "image/png",
     "sizes": "512x512",
     "purpose": "maskable"
