@@ -7,6 +7,7 @@ import Box from '@mui/material/Box';
 import Playdates from './pages/Playdates'
 import Users from './pages/Users'
 import Playdate from './pages/Playdate'
+import Play from './pages/Play'
 
 import Stack from '@mui/material/Stack';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -14,9 +15,11 @@ import CircularProgress from '@mui/material/CircularProgress';
 // 先設定模式（可以之後動態改）
 const mode= "light"; // light, dark
 
+// let testCount= 0;
 function Main() {
   const [body_block, setBodyBlock] = useState(false);
   const updateBodyBlock = (newBodyBlock) => {
+    // console.log(String(testCount++)+':'+newBodyBlock);
     setBodyBlock(newBodyBlock);
   };
 
@@ -30,6 +33,7 @@ function Main() {
               <Route path="/" element={<Playdates updateBodyBlock={updateBodyBlock}/>} />
               <Route path="/users" element={<Users updateBodyBlock={updateBodyBlock}/>} />
               <Route path="/playdate" element={<Playdate updateBodyBlock={updateBodyBlock}/>} />
+              <Route path="/play" element={<Play updateBodyBlock={updateBodyBlock}/>} />
             </Routes>
           </BrowserRouter>
         </Box>

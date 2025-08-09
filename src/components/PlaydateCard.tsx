@@ -5,39 +5,7 @@ import HorizontalRuleIcon from '@mui/icons-material/HorizontalRule';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import EditSquareIcon from '@mui/icons-material/EditSquare';
 
-export type MyChildRef = { // 子暴露方法給父
-};
-type MyChildProps = { // 父傳方法給子
-  updateBodyBlock: (status) => void;
-  viewPlayDateModel: (id, idx) => void;
-  openPlayDateModel: (id, idx) => void;
-  deletePlayDate: (id, idx) => void;
-  index: Number;
-  card: any;
-  preDatetime: string;
-};
-
-const PlaydateCard = React.forwardRef<MyChildRef, MyChildProps>((
-  { updateBodyBlock,viewPlayDateModel,openPlayDateModel,deletePlayDate,card,index,preDatetime }, ref
-) => {
-  const hide_alert = (datetime):boolean => {
-    let tempDate = new Date(datetime)
-    let now = new Date()
-    if(now.getTime()<=tempDate.getTime() && tempDate.getTime()<(now.getTime()+24*60*60*1000)){
-      // 開始時間在現在往後算24小時內
-      return false;
-    }
-    return true;
-  }
-  const hide_datetime_title = ():boolean => {
-  if(preDatetime==''){ return false; }
-  else if(
-    show_weekday(preDatetime)==show_weekday(card.datetime) &&
-    show_date(preDatetime)==show_date(card.datetime)
-  ){ return true; }
-  return false;
-  }
-  const show_weekday = (datetime):string => {
+export function showWeekday(datetime):string{
   let tempDate = new Date(datetime)
   let now = new Date()
   if(tempDate.getFullYear()==now.getFullYear() && 
@@ -48,33 +16,68 @@ const PlaydateCard = React.forwardRef<MyChildRef, MyChildProps>((
   }else{
     return '星期' + ['日','一','二','三','四','五','六'][tempDate.getDay()];
   }
-  
+}
+export function showDate(datetime):string{
+  let tempDate = new Date(datetime)
+  let now = new Date()
+  if(tempDate.getFullYear()==now.getFullYear() && 
+    tempDate.getMonth()==now.getMonth() &&
+    tempDate.getDate()==now.getDate()
+  ){
+    return '即將到來';
+  }else{
+    return ' ' + (tempDate.getMonth()+1) + ' 月 ' + tempDate.getDate() + ' 號';
   }
-  const show_date = (datetime):string => {
+}
+
+export type MyChildRef = { // 子暴露方法給父
+};
+type MyChildProps = { // 父傳方法給子
+  updateBodyBlock: (status) => void;
+  viewPlayDate: (id, idx) => void;
+  openPlayDateModel: (id, idx) => void;
+  deletePlayDate: (id, idx) => void;
+  index: Number;
+  card: any;
+  preDatetime: string;
+};
+
+const PlaydateCard = React.forwardRef<MyChildRef, MyChildProps>((
+  { updateBodyBlock,viewPlayDate,openPlayDateModel,deletePlayDate,card,index,preDatetime }, ref
+) => {
+  const hideAlert = (datetime):boolean => {
     let tempDate = new Date(datetime)
     let now = new Date()
-    if(tempDate.getFullYear()==now.getFullYear() && 
-      tempDate.getMonth()==now.getMonth() &&
-      tempDate.getDate()==now.getDate()
+    if(
+      tempDate.getTime() >= (now.getTime() - 1*60*60*1000) && 
+      tempDate.getTime() < (now.getTime() + 24*60*60*1000)
     ){
-      return '即將到來';
-    }else{
-      return ' ' + (tempDate.getMonth()+1) + ' 月 ' + tempDate.getDate() + ' 號';
+      // 開始時間在現在往後算24小時內
+      return false;
     }
+    return true;
+  }
+  const hideDatetimeTitle = ():boolean => {
+  if(preDatetime==''){ return false; }
+  else if(
+    showWeekday(preDatetime)==showWeekday(card.datetime) &&
+    showDate(preDatetime)==showDate(card.datetime)
+  ){ return true; }
+  return false;
   }
 
   return (
     <>
       <Typography gutterBottom variant="subtitle1" component="div" align='left'
-            sx={{display:hide_datetime_title()?'none':'block',}}>
-        {show_weekday(card.datetime)}
+            sx={{display:hideDatetimeTitle()?'none':'block',}}>
+        {showWeekday(card.datetime)}
         <HorizontalRuleIcon /> 
-        {show_date(card.datetime)}
+        {showDate(card.datetime)}
       </Typography>
-      <Badge color="secondary" variant="dot" invisible={hide_alert(card.datetime)} className='w-full'>
+      <Badge color="secondary" variant="dot" invisible={hideAlert(card.datetime)} className='w-full'>
         <Card className='w-full'>
         <CardActionArea
-          onClick={() => viewPlayDateModel(card.id, index)}
+          onClick={() => viewPlayDate(card.id, index)}
           sx={{
             height: '100%',
             '&[data-active]': {

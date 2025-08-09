@@ -1,5 +1,6 @@
 // theme.ts (或 theme.js)
 import { createTheme } from '@mui/material/styles';
+import './types/mui.d.ts';
 
 export const getTheme = (mode: "light" | "dark") => createTheme({
   palette: {
@@ -61,6 +62,18 @@ export const getTheme = (mode: "light" | "dark") => createTheme({
           },
         }),
       },
+    },
+    MuiPickersDay: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          '&.MuiPickersDay-today':{
+            background: theme.palette.mode === 'dark' ? '#333' : '#ffba0070',
+          },
+          '&.MuiPickersDay-isSelected':{
+            border: theme.palette.mode === 'dark' ? '5px solid #333' : '5px solid #ffba00',
+          },
+        })
+      }
     },
   },
 });

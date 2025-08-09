@@ -1,10 +1,11 @@
+import * as functions from '../functions.tsx'
+// import '../pwa.js' /*暫時關閉註冊瀏覽器通知*/
 import * as React from 'react';
 
-// import '../pwa.js' /*暫時關閉註冊瀏覽器通知*/
-import * as functions from '../functions.tsx'
 import AdminNav from '../components/AdminNav'
-import PlayDateModel from '../components/PlayDateModel'
+import PlayDateModel, {MyChildRef as playDateModelMyChildRef} from '../components/PlayDateModel'
 import PlaydateCard from '../components/PlaydateCard'
+import PlaydateCalendar, {MyChildRef as PlaydateCalendarMyChildRef} from '../components/PlaydateCalendar'
 
 import {Box, Grid} from '@mui/material';
 import {Card,CardContent} from '@mui/material';
@@ -17,14 +18,19 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 import ViewListIcon from '@mui/icons-material/ViewList';
-import GridViewIcon from '@mui/icons-material/GridView';
+import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 
 import Fab from '@mui/material/Fab';
 import AddIcon from '@mui/icons-material/Add';
 
+const today = new Date();
+const today_f = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+const todaytime_f = today_f + ' ' + String(today.getHours()).padStart(2,'0')+':00';
+
 function Playdates({updateBodyBlock}) {
   const [cards, setCards] = React.useState<any[]>([]);
+  const [currentPlay, setCurrentPlay] = React.useState<any[]>([]);
   // 建立 group，每次 cards 更新都會重新建立
   const card_group = React.useMemo(() => {
     return cards.reduce((acc, item, index) => {
@@ -34,12 +40,17 @@ function Playdates({updateBodyBlock}) {
       return acc;
     }, {});
   }, [cards]);
+   
+  {/* today_f */}card_group['2025-08-05']
 
   React.useEffect(() => {
     (async () => {
       try {
         updateBodyBlock(true); //顯示遮蓋
         await getData();
+        await getCurrentPlay();
+        
+
         updateBodyBlock(false); //關閉遮蓋
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -48,12 +59,28 @@ function Playdates({updateBodyBlock}) {
     })(); // Call the IIFE immediately
   }, []); // Empty dependency array ensures it runs only once on mount
 
-  const getData = async () => {
-    let result = await functions.fetchData('GET', 'play_date');
+  const getData = async (where:any=null):Promise<any[]> => {
+    let result = await functions.fetchData('GET', 'play_date', null, where);
     // console.log(result.data);
     setCards(result.data);
-    console.log(cards)
-    console.log(card_group)
+    // console.log(cards)
+    // console.log(card_group)
+    return result.data;
+  }
+  const getCurrentPlay = async ():Promise<void> => {
+    let result = await functions.fetchData('GET', 'play_date', null, {
+      'datetime_s':todaytime_f,
+      'date_e':today_f,
+    });
+    result.data.reverse();
+    setCurrentPlay(result.data);
+    // console.log(result.data);
+  }
+
+  const reGetList = async (where:any=null):Promise<any[]> => {
+    let data = await getData(where);
+    await getCurrentPlay();
+    return data;
   }
   const renewList = async (idx, item)=>{
     cards[idx] = item;
@@ -62,11 +89,20 @@ function Playdates({updateBodyBlock}) {
 
   /*切換顯示模式(卡塊or列表)*/
   const [showWay, setShowWay] = React.useState('list');
-  const handleShowWayChange = (
+  const handleShowWayChange = async(
     event: React.MouseEvent<HTMLElement>,
     newShowWay: string,
   ) => {
-    setShowWay(newShowWay);
+    if (newShowWay !== null) {
+      updateBodyBlock(true)
+      if(newShowWay=='month' && showWay!='month'){
+        await playdateCalendarRef.current?.getPageHighlightedDays()
+      }else if(newShowWay!='month' && showWay=='month'){
+        await getData()
+      }
+      setShowWay(newShowWay);
+    }
+    updateBodyBlock(false)
   };
   const showWayControl = {
     value: showWay,
@@ -74,15 +110,20 @@ function Playdates({updateBodyBlock}) {
     exclusive: true,
   };
 
-  const playDateModelRef = React.useRef<{ setModel: (idx, item) => void }>(null);
+  const playdateCalendarRef = React.useRef<PlaydateCalendarMyChildRef>(null);
+
+  const playDateModelRef = React.useRef<playDateModelMyChildRef>(null);
   const openPlayDateModel = (id, index) =>{
     let tempData = index==-1 ? {} : cards[index]
     // console.log(id+':'+index)
     playDateModelRef.current?.setModel(index, tempData); // 呼叫 child 的方法
   }
-
-  const viewPlayDateModel = (id, index) =>{
+  const viewPlayDate = (id, index) =>{
     let view_url = '/playdate?id='+id
+    console.log(view_url)
+  }
+  const doPlayDate = (id) =>{
+    let view_url = '/play?id='+id
     console.log(view_url)
   }
   const deletePlayDate = async (id, index) =>{
@@ -100,44 +141,9 @@ function Playdates({updateBodyBlock}) {
       if(result.msg){
         alert(result.msg);
       }else{
-        await getData();
+        await reGetList();
       }
       updateBodyBlock(false);
-    }
-  }
-
-  const hide_alert = (datetime):boolean => {
-    let tempDate = new Date(datetime)
-    let now = new Date()
-    if(now.getTime()<=tempDate.getTime() && tempDate.getTime()<(now.getTime()+24*60*60*1000)){
-      // 開始時間在現在往後算24小時內
-      return false;
-    }
-    return true;
-  }
-  const show_weekday = (datetime):string => {
-    let tempDate = new Date(datetime)
-    let now = new Date()
-    if(tempDate.getFullYear()==now.getFullYear() && 
-        tempDate.getMonth()==now.getMonth() &&
-        tempDate.getDate()==now.getDate()
-    ){
-      return '今日';
-    }else{
-      return '星期' + ['日','一','二','三','四','五','六'][tempDate.getDay()];
-    }
-    
-  }
-  const show_date = (datetime):string => {
-    let tempDate = new Date(datetime)
-    let now = new Date()
-    if(tempDate.getFullYear()==now.getFullYear() && 
-        tempDate.getMonth()==now.getMonth() &&
-        tempDate.getDate()==now.getDate()
-    ){
-      return '即將到來';
-    }else{
-      return ' ' + (tempDate.getMonth()+1) + ' 月 ' + tempDate.getDate() + ' 號';
     }
   }
 
@@ -147,19 +153,25 @@ function Playdates({updateBodyBlock}) {
       <Box className="invisible pb-3"><AdminNav /></Box>
 
       <Box sx={{display:'flex', justifyContent:'center'}}>
-        <Card sx={{ maxWidth: 345 }}>
-          <CardContent>
-            <Typography gutterBottom variant="h5" component="div">
-              <Button size="large" onClick={getData}>開始排點</Button>
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }} align='left'>
-              打球時間：YYYY-mm-dd HH:ii<br/>
-              球場位置：新羽力<br/>
-              球場面數：??<br/>
-              (備註.....)
-            </Typography>
-          </CardContent>
-        </Card>
+        { currentPlay.length>0 && 
+          <Card sx={{ maxWidth: 345, minWidth: 275, }}>
+            <CardContent>
+              <Typography gutterBottom variant="h5" component="div">
+                <Button size="large" 
+                        onClick={() => doPlayDate(currentPlay[0].id)}
+                >開始排點</Button>
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }} align='left'>
+                打球日期：{currentPlay[0].datetime.split(" ")[0]}<br/>
+                打球時間：{currentPlay[0].datetime.split(" ")[1]}~{currentPlay[0].datetime2.split(" ")[1]}<br/>
+                球場位置：{currentPlay[0].location}<br/>
+                球場面數：??<br/>
+                備註：{currentPlay[0].note}
+              </Typography>
+            </CardContent>
+          </Card>
+        }
+        { currentPlay.length==0 && <Box margin={'3rem'}></Box>}
       </Box>
 
       <Box className='relative'>
@@ -170,7 +182,7 @@ function Playdates({updateBodyBlock}) {
               <ViewListIcon/>
             </ToggleButton>
             <ToggleButton value="card" key="showWay_card" sx={{display:{xs:'none', sm:'inline-block'}}}>
-              <GridViewIcon/>
+              <ViewModuleIcon/>
             </ToggleButton>
             <ToggleButton value="month" key="showWay_month">
               <CalendarMonthIcon/>
@@ -186,7 +198,7 @@ function Playdates({updateBodyBlock}) {
               {card_group[date].map((card_idx, index) => (
                 <Grid key={'play_date_card-'+date+'-'+index} size={{xs:12, sm:6, md:4, lg:3}} sx={{alignSelf:'end'}}>
                   <PlaydateCard updateBodyBlock={updateBodyBlock}
-                    viewPlayDateModel={viewPlayDateModel}
+                    viewPlayDate={viewPlayDate}
                     openPlayDateModel={openPlayDateModel}
                     deletePlayDate={deletePlayDate}
                     card={cards[card_idx]}
@@ -198,13 +210,12 @@ function Playdates({updateBodyBlock}) {
           </Box>
         ))}
       </Box>
-
       <Box sx={{display:showWay=='card'?'block': 'none'}}>
         <Grid container spacing={2}>
           {cards.map((card, index) => (
             <Grid key={'play_date_card-' + index} size={{xs:12, sm:6, md:4, lg:3}} sx={{alignSelf:'end'}}>
               <PlaydateCard updateBodyBlock={updateBodyBlock}
-                viewPlayDateModel={viewPlayDateModel}
+                viewPlayDate={viewPlayDate}
                 openPlayDateModel={openPlayDateModel}
                 deletePlayDate={deletePlayDate}
                 card={card}
@@ -214,6 +225,16 @@ function Playdates({updateBodyBlock}) {
           ))}
         </Grid>
       </Box>
+      <Box sx={{display:showWay=='month'?'block': 'none'}}>
+        <PlaydateCalendar updateBodyBlock={updateBodyBlock}
+          getData={getData}
+          cards={cards}
+          card_group={card_group}
+          viewPlayDate={viewPlayDate}
+          openPlayDateModel={openPlayDateModel}
+          deletePlayDate={deletePlayDate}
+          ref={playdateCalendarRef}/>
+      </Box>
 
       <Box className="fixed bottom-0 right-0" 
            onClick={() => openPlayDateModel(-1,-1)}
@@ -222,9 +243,10 @@ function Playdates({updateBodyBlock}) {
           <AddIcon />
         </Fab>
       </Box>
+      <Box margin={'3rem'}></Box>
 
       <PlayDateModel updateBodyBlock={updateBodyBlock}
-                     reGetList={getData}
+                     reGetList={reGetList}
                      renewList={renewList}
                      ref={playDateModelRef} />
     </>

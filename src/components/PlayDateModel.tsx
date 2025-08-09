@@ -21,7 +21,7 @@ export type MyChildRef = { // 子暴露方法給父
 };
 type MyChildProps = { // 父傳方法給子
   updateBodyBlock: (status) => void;
-  reGetList: () => void;
+  reGetList: (where:any) => void;
   renewList: (idx, item) => void;
 };
 
@@ -83,7 +83,7 @@ const PlayDateModel = React.forwardRef<MyChildRef, MyChildProps>((
       if(result.msg){
         alert(result.msg);
       }else{
-        await reGetList();
+        await reGetList(null);
         setOpen(false);
       }
     }else{ // 編輯
