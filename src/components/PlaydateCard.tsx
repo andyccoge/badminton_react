@@ -37,20 +37,26 @@ type MyChildProps = { // 父傳方法給子
   viewPlayDate: (id, idx) => void;
   openPlayDateModel: (id, idx) => void;
   deletePlayDate: (id, idx) => void;
-  index: Number;
+  index: number;
   card: any;
   preDatetime: string;
+  alertTime_s?: number;
+  alertTime_e?: number;
 };
 
 const PlaydateCard = React.forwardRef<MyChildRef, MyChildProps>((
-  { updateBodyBlock,viewPlayDate,openPlayDateModel,deletePlayDate,card,index,preDatetime }, ref
+  { updateBodyBlock,
+    viewPlayDate,openPlayDateModel,deletePlayDate,
+    card,index,preDatetime,
+    alertTime_s = 0, alertTime_e = 0,
+  }, ref
 ) => {
   const hideAlert = (datetime):boolean => {
     let tempDate = new Date(datetime)
     let now = new Date()
     if(
-      tempDate.getTime() >= (now.getTime() - 1*60*60*1000) && 
-      tempDate.getTime() < (now.getTime() + 24*60*60*1000)
+      tempDate.getTime() >= (now.getTime() + alertTime_s) && 
+      tempDate.getTime() < (now.getTime() + alertTime_e)
     ){
       // 開始時間在現在往後算24小時內
       return false;

@@ -5,7 +5,7 @@ import BottomNavigation from '../components/BottomNavigation'
 const reactLogo = '../assets/react.svg'
 const viteLogo = '/vite.svg'
 
-function Play(updateBodyBlock) {
+function Play({updateBodyBlock}) {
   const [count, setCount] = useState(0)
 
   return (   

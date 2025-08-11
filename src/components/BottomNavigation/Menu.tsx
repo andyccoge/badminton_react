@@ -2,11 +2,11 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
+import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
-import SettingsIcon from '@mui/icons-material/Settings';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
+import ScoreboardIcon from '@mui/icons-material/Scoreboard';
 
+import SettingsIcon from '@mui/icons-material/Settings';
 interface BottomMenuProps {
   onUserClick: () => void;
 }
@@ -23,14 +23,14 @@ export default function BottomMenu({ onUserClick }: BottomMenuProps) {
           setValue(newValue);
         }}
       >
-        <BottomNavigationAction label="添加場地" icon={<LibraryAddIcon />} />
-        <BottomNavigationAction label="參數設定" icon={<SettingsIcon />} />
-        <BottomNavigationAction label="比賽紀錄" icon={<ReceiptLongIcon />} />
         <BottomNavigationAction
           label="球員管理"
-          icon={<SupervisorAccountIcon />}
+          icon={<GroupAddIcon />}
           onClick={onUserClick} // 呼叫父層傳來的函數
         />
+        <BottomNavigationAction label="添加場地" icon={<LibraryAddIcon />} />
+        <BottomNavigationAction label="比賽紀錄" icon={<ScoreboardIcon />} />
+        <BottomNavigationAction label="參數設定" icon={<SettingsIcon />} />
       </BottomNavigation>
     </Box>
   );

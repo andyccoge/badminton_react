@@ -27,9 +27,14 @@ type MyChildProps = { // 父傳方法給子
   viewPlayDate: (id, idx) => void;
   openPlayDateModel: (id, idx) => void;
   deletePlayDate: (id, idx) => void;
+  alertTime_s?: number;
+  alertTime_e?: number;
 };
 function PlaydateCalendar(
-  { getData,cards,card_group,updateBodyBlock,viewPlayDate,openPlayDateModel,deletePlayDate }: MyChildProps,
+  { getData,cards,card_group,
+    updateBodyBlock,viewPlayDate,openPlayDateModel,deletePlayDate,
+    alertTime_s = 0, alertTime_e = 0,
+  }: MyChildProps,
   ref: React.Ref<MyChildRef>
 ) {
   const [selectedDate, setSelectedDate] = React.useState<string>(today_f);
@@ -167,6 +172,8 @@ function PlaydateCalendar(
                   card={cards[idx]}
                   index={idx}
                   preDatetime={cards[idx].datetime}
+                  alertTime_s={alertTime_s}
+                  alertTime_e={alertTime_e}
                 />
               </Grid>
             ))}

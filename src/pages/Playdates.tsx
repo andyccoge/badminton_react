@@ -1,13 +1,8 @@
-import * as functions from '../functions.tsx'
+import * as functions from '../functions.tsx';
 // import '../pwa.js' /*暫時關閉註冊瀏覽器通知*/
 import * as React from 'react';
 
-import AdminNav from '../components/AdminNav'
-import PlayDateModel, {MyChildRef as playDateModelMyChildRef} from '../components/PlayDateModel'
-import PlaydateCard from '../components/PlaydateCard'
-import PlaydateCalendar, {MyChildRef as PlaydateCalendarMyChildRef} from '../components/PlaydateCalendar'
-
-import {Box, Grid} from '@mui/material';
+import {Box, Grid, Skeleton} from '@mui/material';
 import {Card,CardContent} from '@mui/material';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -24,9 +19,14 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import Fab from '@mui/material/Fab';
 import AddIcon from '@mui/icons-material/Add';
 
+import AdminNav from '../components/AdminNav'
+import PlayDateModel, {MyChildRef as playDateModelMyChildRef} from '../components/PlayDateModel'
+import PlaydateCard from '../components/PlaydateCard'
+import PlaydateCalendar, {MyChildRef as PlaydateCalendarMyChildRef} from '../components/PlaydateCalendar'
+
 const today = new Date();
-const today_f = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
-const todaytime_f = today_f + ' ' + String(today.getHours()).padStart(2,'0')+':00';
+const alertTime_s = -1*60*60*1000;    /*提醒時間-開始(目前時間往前算1小時)*/
+const alertTime_e = 24*60*60*1000+1;  /*提醒時間-結束(目前時間往後算24小時)*/
 
 function Playdates({updateBodyBlock}) {
   const [cards, setCards] = React.useState<any[]>([]);
@@ -40,22 +40,20 @@ function Playdates({updateBodyBlock}) {
       return acc;
     }, {});
   }, [cards]);
-   
-  {/* today_f */}card_group['2025-08-05']
 
+  
+  const [initFinished, setInitFinished] = React.useState(false);
   React.useEffect(() => {
     (async () => {
+      updateBodyBlock(true); //顯示遮蓋
       try {
-        updateBodyBlock(true); //顯示遮蓋
-        await getData();
         await getCurrentPlay();
-        
+        await getData();
 
-        updateBodyBlock(false); //關閉遮蓋
       } catch (error) {
         console.error('Error fetching data:', error);
-        updateBodyBlock(true); //關閉遮蓋
       }
+      updateBodyBlock(false); //關閉遮蓋
     })(); // Call the IIFE immediately
   }, []); // Empty dependency array ensures it runs only once on mount
 
@@ -67,19 +65,37 @@ function Playdates({updateBodyBlock}) {
     // console.log(card_group)
     return result.data;
   }
+  const getgetCurrentPlayTime = () => {
+    const temp_d1 = new Date(today.getTime() + alertTime_s);
+    const temp_d2 = new Date(today.getTime() + alertTime_e);
+    const datetime_s = temp_d1.getFullYear()+'-'+
+                    String(temp_d1.getMonth()+1).padStart(2,'0')+'-'+
+                    String(temp_d1.getDate()).padStart(2,'0')+' '+
+                    String(temp_d1.getHours()).padStart(2,'0')+':'+
+                    String(temp_d1.getMinutes()).padStart(2,'0');
+    const datetime_e = temp_d2.getFullYear()+'-'+
+                    String(temp_d2.getMonth()+1).padStart(2,'0')+'-'+
+                    String(temp_d2.getDate()).padStart(2,'0')+' '+
+                    String(temp_d2.getHours()).padStart(2,'0')+':'+
+                    String(temp_d2.getMinutes()).padStart(2,'0');
+    return [datetime_s, datetime_e];
+  }
   const getCurrentPlay = async ():Promise<void> => {
+    setInitFinished(false);
+    const [datetime_s, datetime_e] = getgetCurrentPlayTime();
     let result = await functions.fetchData('GET', 'play_date', null, {
-      'datetime_s':todaytime_f,
-      'date_e':today_f,
+      'datetime_s': datetime_s,
+      'datetime_e': datetime_e,
     });
     result.data.reverse();
+    setInitFinished(true);
     setCurrentPlay(result.data);
     // console.log(result.data);
   }
 
   const reGetList = async (where:any=null):Promise<any[]> => {
-    let data = await getData(where);
     await getCurrentPlay();
+    let data = await getData(where);
     return data;
   }
   const renewList = async (idx, item)=>{
@@ -119,12 +135,13 @@ function Playdates({updateBodyBlock}) {
     playDateModelRef.current?.setModel(index, tempData); // 呼叫 child 的方法
   }
   const viewPlayDate = (id, index) =>{
-    let view_url = '/playdate?id='+id
-    console.log(view_url)
+    let view_url = '/playdate?id='+id;
+    // console.log(view_url)
+    window.open(view_url);
   }
   const doPlayDate = (id) =>{
-    let view_url = '/play?id='+id
-    console.log(view_url)
+    let view_url = '/play?id='+id;
+    console.log(view_url);
   }
   const deletePlayDate = async (id, index) =>{
     let tempData = cards[index];
@@ -153,25 +170,56 @@ function Playdates({updateBodyBlock}) {
       <Box className="invisible pb-3"><AdminNav /></Box>
 
       <Box sx={{display:'flex', justifyContent:'center'}}>
-        { currentPlay.length>0 && 
-          <Card sx={{ maxWidth: 345, minWidth: 275, }}>
+        <Card sx={{ maxWidth: 345, minWidth: 275, }}>
+          { !initFinished && <>
             <CardContent>
-              <Typography gutterBottom variant="h5" component="div">
-                <Button size="large" 
-                        onClick={() => doPlayDate(currentPlay[0].id)}
-                >開始排點</Button>
+              <Typography gutterBottom variant="h4" component="div" className='flex justify-center'>
+                <Skeleton animation="wave" variant="rounded" width={100}/>
               </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }} align='left'>
-                打球日期：{currentPlay[0].datetime.split(" ")[0]}<br/>
-                打球時間：{currentPlay[0].datetime.split(" ")[1]}~{currentPlay[0].datetime2.split(" ")[1]}<br/>
-                球場位置：{currentPlay[0].location}<br/>
-                球場面數：??<br/>
-                備註：{currentPlay[0].note}
+              <Typography variant="body2">
+                <Skeleton animation="wave" width="60%"/>
+                <Skeleton animation="wave" width="60%"/>
+                <Skeleton animation="wave" width="45%"/>
+                <Skeleton animation="wave" width="30%"/>
+                <Skeleton animation="wave"/>
               </Typography>
             </CardContent>
-          </Card>
-        }
-        { currentPlay.length==0 && <Box margin={'3rem'}></Box>}
+          </>}
+          { initFinished && <>
+              <CardContent>
+                {currentPlay.length>0 && <>
+                  <Typography gutterBottom variant="h5" component="div">
+                    <Button size="large" 
+                            onClick={() => doPlayDate(currentPlay[0].id)}
+                    >開始排點</Button>
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }} align='left'>
+                    打球日期：{currentPlay[0].datetime.split(" ")[0]}<br/>
+                    打球時間：{currentPlay[0].datetime.split(" ")[1]}~{currentPlay[0].datetime2.split(" ")[1]}<br/>
+                    球場位置：{currentPlay[0].location}<br/>
+                    球場面數：??<br/>
+                    備註：{currentPlay[0].note}
+                  </Typography>
+                </>}
+                {currentPlay.length==0 && <>
+                  <Box height="150px">
+                    <Typography gutterBottom variant="h5" component="div">無需安排</Typography>
+                    <Box>
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        {getgetCurrentPlayTime().map((item, index) => (
+                          <React.Fragment key={'topCard-'+index}>
+                            {item}<br />
+                            {index==0 && <React.Fragment>~<br /></React.Fragment>}
+                          </React.Fragment>
+                        ))}
+                        間無打球日需排點
+                      </Typography>
+                    </Box>
+                  </Box>
+                </>}
+              </CardContent>
+          </>}
+        </Card>
       </Box>
 
       <Box className='relative'>
@@ -203,7 +251,9 @@ function Playdates({updateBodyBlock}) {
                     deletePlayDate={deletePlayDate}
                     card={cards[card_idx]}
                     index={card_idx}
-                    preDatetime={index==0 ? '' : cards[card_idx].datetime}/>
+                    preDatetime={index==0 ? '' : cards[card_idx].datetime}
+                    alertTime_s={alertTime_s}
+                    alertTime_e={alertTime_e}/>
                 </Grid>
               ))}
             </Grid>
@@ -220,7 +270,10 @@ function Playdates({updateBodyBlock}) {
                 deletePlayDate={deletePlayDate}
                 card={card}
                 index={index}
-                preDatetime={index==0?'':cards[index-1].datetime}/>
+                preDatetime={index==0?'':cards[index-1].datetime}
+                alertTime_s={alertTime_s}
+                alertTime_e={alertTime_e}
+                />
             </Grid>
           ))}
         </Grid>
@@ -233,6 +286,8 @@ function Playdates({updateBodyBlock}) {
           viewPlayDate={viewPlayDate}
           openPlayDateModel={openPlayDateModel}
           deletePlayDate={deletePlayDate}
+          alertTime_s={alertTime_s}
+          alertTime_e={alertTime_e}
           ref={playdateCalendarRef}/>
       </Box>
 
