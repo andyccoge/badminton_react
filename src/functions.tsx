@@ -1,4 +1,6 @@
 import axios from 'axios';
+import {VariantType, closeSnackbar } from 'notistack';
+import CloseIcon from '@mui/icons-material/Close';
 
 const api_main_url = 'https://ll2j8j5jmb.execute-api.ap-northeast-1.amazonaws.com';
 const api_stage = 'default';
@@ -58,4 +60,33 @@ function buildQueryParams(obj: any, prefix = ''): string {
   }
 
   return str.join('&');
+}
+
+// 全域用推送訊息函數生成器
+export function createEnqueueSnackbar(enqueueSnackbar:Function){
+  return (
+    msg: String, 
+    variant: VariantType, // variant could be success, error, warning, info, or default
+    do_function_name: String = '',
+    do_function: Function = ()=>{},
+  ) => {
+    const autoHideDuration = 3000;
+    const action = snackbarId => (
+      <>
+        {do_function_name && do_function && 
+          <button onClick={() => { do_function() }} style={{marginRight:'1rem'}}>
+            {do_function_name}
+          </button>
+        }
+        <button onClick={() => { closeSnackbar(snackbarId) }}>
+          <CloseIcon />
+        </button>
+      </>
+    );
+
+    enqueueSnackbar(msg, { 
+      variant, autoHideDuration, action,
+      anchorOrigin: { horizontal:'right', vertical:'top' },
+    });
+  }; 
 }

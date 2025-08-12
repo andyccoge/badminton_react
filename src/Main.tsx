@@ -1,5 +1,6 @@
-import { StrictMode, useState } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import * as React from 'react';
+import { SnackbarProvider } from 'notistack';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { getTheme } from "./theme";
 
@@ -12,28 +13,62 @@ import Play from './pages/Play'
 import Stack from '@mui/material/Stack';
 import CircularProgress from '@mui/material/CircularProgress';
 
+import {TransitionProps} from '@mui/material/transitions';
+import {Slide, Button} from '@mui/material';
+import {Dialog, DialogActions, DialogContent,DialogContentText,DialogTitle} from '@mui/material';
+
 // 先設定模式（可以之後動態改）
 const mode= "light"; // light, dark
 
+const Transition = React.forwardRef(function Transition(
+  props: TransitionProps & {
+    children: React.ReactElement<any, any>;
+  },
+  ref: React.Ref<unknown>,
+) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
+
 // let testCount= 0;
 function Main() {
-  const [body_block, setBodyBlock] = useState(false);
+  const [body_block, setBodyBlock] = React.useState(false);
   const updateBodyBlock = (newBodyBlock) => {
     // console.log(String(testCount++)+':'+newBodyBlock);
     setBodyBlock(newBodyBlock);
   };
 
+  const [confirmModelStatus, setConfirmModelStatus] = React.useState(false);
+  const [confirmModelTitle, setConfirmModelTitle] = React.useState('');
+  const [confirmModelMessage, setConfirmModelMessage] = React.useState('');
+  const [confirmModelFunctionName, setConfirmModelFunctionName] = React.useState('');
+  const [confirmModelFunction, setConfirmModelFunction] = React.useState<Function>(()=>{ return false; });
+  const showConfirmModelStatus = (
+    title: string,
+    message: string,
+    do_function_name: string = '',
+    do_function: Function = ()=>{ return false; }
+  )=>{
+    setConfirmModelTitle(title);
+    setConfirmModelMessage(message);
+    setConfirmModelFunctionName(do_function_name);
+    setConfirmModelFunction(() => async () => { 
+      const modelStatus = await do_function();
+      setConfirmModelStatus(modelStatus);
+    });
+    setConfirmModelStatus(true);
+  }
+
   return (
     <ThemeProvider theme={getTheme(mode)}>
       <CssBaseline /> {/* 自動套用背景、文字顏色 */}
-      <StrictMode>
+      <React.StrictMode>
         <Box className="pl-2 pr-2 pb-3">
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Playdates updateBodyBlock={updateBodyBlock}/>} />
-              <Route path="/users" element={<Users updateBodyBlock={updateBodyBlock}/>} />
-              <Route path="/playdate" element={<Playdate updateBodyBlock={updateBodyBlock}/>} />
-              <Route path="/play" element={<Play updateBodyBlock={updateBodyBlock}/>} />
+              <Route path="/" element={<Playdates updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}/>} />
+              <Route path="/users" element={<Users updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}/>} />
+              <Route path="/playdate" element={<Playdate updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}/>} />
+              <Route path="/play" element={<Play updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}/>} />
             </Routes>
           </BrowserRouter>
         </Box>
@@ -43,9 +78,41 @@ function Main() {
             <CircularProgress color="inherit" />
           </Stack>
         </Box>
-      </StrictMode>
+
+        <Dialog
+          open={confirmModelStatus}
+          slots={{
+            transition: Transition,
+          }}
+          keepMounted
+          onClose={()=>{setConfirmModelStatus(false)}}
+          aria-describedby="confirmModel"
+        >
+          <DialogTitle>{confirmModelTitle}</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="confirmModel">
+              {confirmModelMessage}
+            </DialogContentText>
+          </DialogContent>
+          {confirmModelFunctionName &&
+            <DialogActions>
+              <Button onClick={()=>{setConfirmModelStatus(false)}} 
+                      color="error" sx={{mr:'1rem'}}
+              >取消</Button>
+              <Button onClick={()=>{confirmModelFunction();}}
+              >{confirmModelFunctionName}</Button>
+            </DialogActions>
+          }
+        </Dialog>
+      </React.StrictMode>
     </ThemeProvider>
   )
 }
 
-export default Main
+export default function IntegrationNotistack() {
+  return (
+    <SnackbarProvider maxSnack={3}>
+      <Main />
+    </SnackbarProvider>
+  );
+}

@@ -1,6 +1,7 @@
 import * as functions from '../functions.tsx';
-// import '../pwa.js' /*暫時關閉註冊瀏覽器通知*/
 import * as React from 'react';
+import { useSnackbar } from 'notistack';
+// import '../pwa.js' /*暫時關閉註冊瀏覽器通知*/
 
 import {Box, Grid, Skeleton} from '@mui/material';
 import {Card,CardContent} from '@mui/material';
@@ -28,7 +29,10 @@ const today = new Date();
 const alertTime_s = -1*60*60*1000;    /*提醒時間-開始(目前時間往前算1小時)*/
 const alertTime_e = 24*60*60*1000+1;  /*提醒時間-結束(目前時間往後算24小時)*/
 
-function Playdates({updateBodyBlock}) {
+function Playdates({updateBodyBlock, showConfirmModelStatus}) {
+  const { enqueueSnackbar } = useSnackbar();
+  const showMessage = functions.createEnqueueSnackbar(enqueueSnackbar);
+
   const [cards, setCards] = React.useState<any[]>([]);
   const [currentPlay, setCurrentPlay] = React.useState<any[]>([]);
   // 建立 group，每次 cards 更新都會重新建立
@@ -156,7 +160,7 @@ function Playdates({updateBodyBlock}) {
       updateBodyBlock(true);
       let result = await functions.fetchData('DELETE', 'play_date', null, {id:id});
       if(result.msg){
-        alert(result.msg);
+        showMessage(result.msg, 'error');
       }else{
         await reGetList();
       }

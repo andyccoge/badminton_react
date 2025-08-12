@@ -1,5 +1,6 @@
 import * as functions from '../functions.tsx';
 import * as React from 'react';
+import { useSnackbar } from 'notistack';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {Box, Grid, Skeleton, Divider} from '@mui/material';
@@ -17,7 +18,10 @@ import TableUsers, {
   MyChildRef as TableUsersMyChildRef, empty_searchForm as emptyUserSearchForm
 } from '../components/TableUsers.tsx';
 
-function Playdate({updateBodyBlock}) {
+function Playdate({updateBodyBlock, showConfirmModelStatus}) {
+  const { enqueueSnackbar } = useSnackbar();
+  const showMessage = functions.createEnqueueSnackbar(enqueueSnackbar);
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const play_date_id = searchParams.get('id');

@@ -1,12 +1,21 @@
-import { useState } from 'react'
+import * as functions from '../functions.tsx'
+import * as React from 'react';
+import { useSnackbar } from 'notistack';
+
 import Grid from '@mui/material/Grid'
 import BottomNavigation from '../components/BottomNavigation'
 
 const reactLogo = '../assets/react.svg'
 const viteLogo = '/vite.svg'
 
-function Play({updateBodyBlock}) {
-  const [count, setCount] = useState(0)
+function Play({updateBodyBlock, showConfirmModelStatus}) {
+  const { enqueueSnackbar } = useSnackbar();
+  const showMessage = functions.createEnqueueSnackbar(enqueueSnackbar);
+
+
+
+  
+  const [count, setCount] = React.useState(0)
 
   return (   
     <>

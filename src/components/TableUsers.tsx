@@ -9,6 +9,11 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import Checkbox from '@mui/material/Checkbox';
 
+import SearchIcon from '@mui/icons-material/Search';
+import {TextField, Stack, Button} from '@mui/material';
+import {FormControl, InputLabel, MenuItem} from '@mui/material';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+
 export const empty_searchForm = {
   ids:[],
   email: '',
@@ -16,10 +21,12 @@ export const empty_searchForm = {
   gender: '',
   name_keyword: '',
   level_over: '',
+  p: 0,
+  per_p_num: 0,
 };
 
 interface Column {
-  id: 'name' | 'name_line' | 'gender' | 'level';
+  id: 'name' | 'name_nick' | 'name_line' | 'gender' | 'level' | 'cellphone' | 'email';
   label: string;
   minWidth?: number;
   align?: 'right';
@@ -28,7 +35,8 @@ interface Column {
 
 const columns: Column[] = [
   { id: 'name', label: '姓名', minWidth: 100 },
-  { id: 'name_line', label: '綽號', minWidth: 100 },
+  { id: 'name_nick', label: '綽號', minWidth: 100 },
+  { id: 'name_line', label: 'LINE名稱', minWidth: 100 },
   { 
     id: 'gender', 
     label: '性別', 
@@ -36,13 +44,8 @@ const columns: Column[] = [
     format: (value: number) => ['', '男', '女'][value]
   },
   { id: 'level', label: '等級', minWidth: 62 },
-  // {
-  //   id: 'density',
-  //   label: 'Density',
-  //   minWidth: 170,
-  //   align: 'right',
-  //   format: (value: number) => value.toFixed(2),
-  // },
+  { id: 'cellphone', label: '手機', minWidth: 100 },
+  { id: 'email', label: '信箱', minWidth: 150 },
 ];
 
 interface Data {
@@ -65,15 +68,18 @@ export type MyChildRef = { // 子暴露方法給父
 type MyChildProps = { // 父傳方法給
   updateBodyBlock: (status) => void;
   getData: (where:any) => void;
+  clickFirstCell:(idx:number, item:any) => void;
   countTotal?: number;
   where?: {},
   numPerPage?: number,
+  needSearch?: boolean,
   needCheckBox?: boolean,
   needTool?: boolean,
 };
 function TableUsers(
   { 
-    updateBodyBlock, getData, where={}, countTotal=0, numPerPage=10, needCheckBox=false, needTool=false,
+    updateBodyBlock, getData, clickFirstCell, where={}, countTotal=0, 
+    numPerPage=10, needSearch=true, needCheckBox=false, needTool=false,
   }: MyChildProps,
   ref: React.Ref<MyChildRef>
 ) {
@@ -96,17 +102,22 @@ function TableUsers(
   const [rows, setRows] = React.useState<Array<any>>([]);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(numPerPage>0 ? numPerPage : Number.MAX_VALUE);
+  const [serchform, setSearchForm] = React.useState(JSON.parse(JSON.stringify(where)));
 
-  const handleChangePage = (event: unknown, newPage: number) => {
+  const handleChangePage = async (event: unknown, newPage: number) => {
+    updateBodyBlock(true);
     setPage(newPage);
-    where['p'] = newPage;
-    getData(where);
+    serchform['p'] = newPage;
+    setSearchForm(serchform);
+    await getData(serchform);
+    updateBodyBlock(false);
   };
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = async (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(+event.target.value);
-    setPage(0);
-    where['p'] = 0;
-    getData(where);
+    serchform['per_p_num'] = +event.target.value;
+    setSearchForm(serchform);
+    console.log(serchform);
+    await goSearch();
   };
 
   const [selected, setSelected] = React.useState<readonly number[]>([]);
@@ -137,7 +148,60 @@ function TableUsers(
     setSelected(newSelected);
   };
 
-  return (
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let { name, value } = e.target;
+    setSearchForm(prev => ({ ...prev, [name]: value }));
+  };
+  const handleKeyDown = async(event) => {
+    if (event.key === 'Enter'){ await goSearch(); }
+  };
+  const handleSelectChange = (event: SelectChangeEvent) => {
+    let { name, value } = event.target;
+    setSearchForm(prev => ({ ...prev, [name]: value }));
+  };
+  const goSearch = async () =>{
+    updateBodyBlock(true);
+    setRows([]);
+    setPage(0);
+    serchform['p'] = 0;
+    await getData(serchform);
+    updateBodyBlock(false);
+  }
+  const cleanSearch = async () =>{
+    setSearchForm(where);
+    await goSearch();
+  }
+
+  return (<>
+    {needSearch && <>
+      <Stack direction={"row"} spacing={0} flexWrap={'wrap'} justifyContent={'start'}>
+        <TextField variant="filled" size="small" onChange={handleChange} onKeyDown={handleKeyDown} label="信箱" name="email" value={serchform.email}/>
+        <TextField variant="filled" size="small" onChange={handleChange} onKeyDown={handleKeyDown} label="手機" name="cellphone" value={serchform.cellphone}/>
+        <TextField variant="filled" size="small" onChange={handleChange} onKeyDown={handleKeyDown} label="姓名/綽號/LINE名稱" name="name_keyword" value={serchform.name_keyword}/>
+        <TextField variant="filled" size="small" onChange={handleChange} onKeyDown={handleKeyDown} label="等級(以上)" name="level_over" value={serchform.level_over} type="number"/>
+        <FormControl variant="filled" size="small" sx={{ minWidth: 75 }} >
+          <InputLabel id="searchform_gender">性別</InputLabel>
+          <Select
+            labelId="searchform_gender"
+            name="gender"
+            value={serchform.gender}
+            onChange={handleSelectChange}
+            autoWidth
+            label="性別"
+          >
+            <MenuItem value=""><em></em></MenuItem>
+            <MenuItem value={1}>男</MenuItem>
+            <MenuItem value={2}>女</MenuItem>
+          </Select>
+        </FormControl>
+        <Button size="small" sx={{mr:'1rem',alignSelf:'center'}} onClick={goSearch}>
+          搜尋<SearchIcon />
+        </Button>
+        <Button size="small" sx={{alignSelf:'center'}} variant="text" color="info" onClick={cleanSearch}>
+          清除搜尋
+        </Button>
+      </Stack>
+    </>}
     <Paper sx={{ width: '100%' }}>
       <TableContainer sx={{ maxHeight: 440 }}>
         <Table stickyHeader aria-label="sticky table">
@@ -176,7 +240,7 @@ function TableUsers(
           <TableBody>
             {rows
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((row) => {
+              .map((row, idx) => {
                 return (
                   <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
                     {needCheckBox &&
@@ -191,13 +255,22 @@ function TableUsers(
                         />
                       </TableCell>
                     }
-                    {columns.map((column) => {
+                    {columns.map((column, index) => {
                       const value = row[column.id];
                       return (
                         <TableCell key={column.id} align={column.align}>
-                          {column.format && typeof value === 'number'
+                          {index==0 && <>
+                            <Button color="info" onClick={()=>{clickFirstCell(idx, row)}} sx={{p:0}}>
+                              {column.format && typeof value === 'number'
+                              ? column.format(value)
+                              : value}
+                            </Button>
+                          </>}
+                          {index!=0 && <>
+                            {column.format && typeof value === 'number'
                             ? column.format(value)
                             : value}
+                          </>}
                         </TableCell>
                       );
                     })}
@@ -208,7 +281,7 @@ function TableUsers(
         </Table>
       </TableContainer>
       <TablePagination sx={{display:numPerPage<=0 ? 'none' : 'block'}}
-        rowsPerPageOptions={[10, 25, 100].concat(numPerPage).sort((a,b)=>(a - b))}
+        rowsPerPageOptions={[...new Set([10, 25, 100, rowsPerPage])].sort((a, b) => a - b)}
         component="div"
         count={countTotal}
         rowsPerPage={rowsPerPage}
@@ -219,6 +292,6 @@ function TableUsers(
         labelDisplayedRows={({ from, to, count })=>{ return `${from}–${to} / ${count !== -1 ? count : `超過 ${to}`}`; }}
       />
     </Paper>
-  );
+  </>);
 }
 export default React.forwardRef<MyChildRef, MyChildProps>(TableUsers);

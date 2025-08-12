@@ -1,5 +1,6 @@
 import * as functions from '../functions.tsx';
 import * as React from 'react';
+import { useSnackbar } from 'notistack';
 
 import {Box, Grid, Skeleton, Divider} from '@mui/material';
 import {Button, Typography, TextareaAutosize} from '@mui/material';
@@ -12,12 +13,18 @@ import AdminNav from '../components/AdminNav.tsx'
 import TableUsers, {
   MyChildRef as TableUsersMyChildRef, empty_searchForm as emptyUserSearchForm
 } from '../components/TableUsers.tsx';
+import UserModel, {MyChildRef as UserModelMyChildRef} from '../components/UserModel'
 
-function Users({updateBodyBlock}) {
+const numPerPage = 0; /*列表一頁顯示數量(0表示不使用分頁功能)*/
+
+function Users({updateBodyBlock, showConfirmModelStatus}) {
+  const { enqueueSnackbar } = useSnackbar();
+  const showMessage = functions.createEnqueueSnackbar(enqueueSnackbar);
+
   const [initFinished, setInitFinished] = React.useState(false);
   const [users, setUers] = React.useState<any[]>([]);
+  emptyUserSearchForm['per_p_num'] = numPerPage;
   const [userSearchForm, setuserSearchForm] = React.useState(JSON.parse(JSON.stringify(emptyUserSearchForm)));
-
   const TableUsersRef = React.useRef<TableUsersMyChildRef>(null);
 
   React.useEffect(() => {
@@ -47,23 +54,55 @@ function Users({updateBodyBlock}) {
     let selectedIds = TableUsersRef.current?.getSelectedIds();
     console.log(selectedIds);
     if(selectedIds?.length==0){
-      alert('請勾選刪除項目');return;
+      showMessage('請勾選刪除項目', 'error');return;
     }
-    else if(confirm(`確定刪除勾選的【`+ selectedIds?.length + `】位球員？`)){
+    const do_function = async():Promise<boolean> => {
       updateBodyBlock(true);
-      let result = await functions.fetchData('DELETE', 'users', null, {ids:selectedIds});
-      if(result.msg){
-        alert(result.msg);
-      }else{
-        await getUsers(userSearchForm);
+      let modelStatus = true;
+      try {
+        let result = await functions.fetchData('DELETE', 'users', null, {ids:selectedIds});
+        if(result.msg){
+          showMessage(result.msg, 'error');
+        }else{
+          modelStatus = false;
+          await getUsers(userSearchForm);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        const data = error?.response?.data;
+        if (typeof data === 'string' && data.match('fk_matchs_users_2')) {
+          showMessage('此球員有比賽紀錄，不可刪除', 'error');
+        }
       }
       updateBodyBlock(false);
+      return modelStatus;
     }
+    showConfirmModelStatus(
+      `確認刪除？`,
+      `即將刪除勾選的【`+ selectedIds?.length + `】位球員，確認執行嗎？`,
+      '確認',
+      do_function
+    );
   }
   const openUserModel = (id, index) =>{
     let tempData = index==-1 ? {} : users[index]
     // console.log(id+':'+index)
-    // playDateModelRef.current?.setModel(index, tempData); // 呼叫 child 的方法
+    userModelRef.current?.setModel(index, tempData); // 呼叫 child 的方法
+  }
+
+  const userModelRef = React.useRef<UserModelMyChildRef>(null);
+  const clickTableUsers = (idx:number, item:any) => {
+    // console.log(item);
+    openUserModel(item.id, idx);
+  }
+  const reGetList = async (where:any=null):Promise<any[]> => {
+    let result = getUsers(userSearchForm);
+    return result;
+  }
+  const renewList = async (idx, item)=>{
+    users[idx] = item;
+    setUers(users);
+    TableUsersRef.current?.showRows(users);
   }
 
   return (   
@@ -87,8 +126,9 @@ function Users({updateBodyBlock}) {
       </Grid>
       <TableUsers updateBodyBlock={updateBodyBlock}
                   getData={getUsers}
+                  clickFirstCell={clickTableUsers}
                   where={userSearchForm}
-                  numPerPage={0}
+                  numPerPage={numPerPage}
                   needCheckBox={true}
                   ref={TableUsersRef}/>
       <Box textAlign="left" sx={{mt:'1rem'}}>
@@ -104,8 +144,13 @@ function Users({updateBodyBlock}) {
           <AddIcon />
         </Fab>
       </Box>
+
+      <UserModel updateBodyBlock={updateBodyBlock}
+                  reGetList={reGetList}
+                  renewList={renewList}
+                  ref={userModelRef} />
     </>
   )
 }
 
-export default Users
+export default Users;

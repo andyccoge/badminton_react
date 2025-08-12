@@ -1,6 +1,7 @@
-import * as functions from '../functions.tsx'
-
+import * as functions from '../functions.tsx';
 import * as React from 'react';
+import { useSnackbar } from 'notistack';
+
 import Button from '@mui/material/Button';
 import {Dialog,DialogActions,DialogContent,DialogContentText,DialogTitle} from '@mui/material';
 import Slide from '@mui/material/Slide';
@@ -35,6 +36,9 @@ const empty_data = {
 const PlayDateModel = React.forwardRef<MyChildRef, MyChildProps>((
   { updateBodyBlock,reGetList,renewList }, ref
 ) => {
+  const { enqueueSnackbar } = useSnackbar();
+  const showMessage = functions.createEnqueueSnackbar(enqueueSnackbar);
+
   const [index, setIndex] = React.useState(-1);
   const [form, setForm] = React.useState(JSON.parse(JSON.stringify(empty_data)));
   const handleChange_d = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,7 +85,7 @@ const PlayDateModel = React.forwardRef<MyChildRef, MyChildProps>((
     if(form.id==-1){ // 新增
       result = await functions.fetchData('POST', 'play_date', form);
       if(result.msg){
-        alert(result.msg);
+        showMessage(result.msg, 'error');
       }else{
         await reGetList(null);
         setOpen(false);
@@ -89,7 +93,7 @@ const PlayDateModel = React.forwardRef<MyChildRef, MyChildProps>((
     }else{ // 編輯
       result = await functions.fetchData('PUT', 'play_date', form, {id:form.id});
       if(result.msg){
-        alert(result.msg);
+        showMessage(result.msg, 'error');
       }else{
         await renewList(index, form);
         setOpen(false);
