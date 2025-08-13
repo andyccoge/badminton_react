@@ -49,6 +49,7 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
         await getAllData(Number(play_date_id));
       } catch (error) {
         console.error('Error fetching data:', error);
+        showMessage('取得打球日完整設定資料發生錯誤', 'error');
       }
       updateBodyBlock(false); //關閉遮蓋
     })(); // Call the IIFE immediately
@@ -56,7 +57,13 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
 
   const getAllData = async (play_date_id:number=0):Promise<any> => {
     setInitFinished(false);
-    let result = await functions.fetchData('GET', 'play_date_data', null, {id:play_date_id});
+    let result:any;
+    try {
+      result = await functions.fetchData('GET', 'play_date_data', null, {id:play_date_id});
+    } catch (error) {
+      // console.error('Error fetching data:', error);
+      showMessage('發生錯誤', 'error');
+    }
     console.log(result);
     if(!result.play_date){ 
       navigate('/', { replace: true });
@@ -73,7 +80,13 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   }
   const getReservation = async(play_date_id:number=0):Promise<any> => {
     userSearchForm['play_date_id'] = play_date_id;
-    let result = await functions.fetchData('GET', 'reservations', null, userSearchForm);
+    let result:any;
+    try {
+      result = await functions.fetchData('GET', 'reservations', null, userSearchForm);
+    } catch (error) {
+      // console.error('Error fetching data:', error);
+      showMessage('發生錯誤', 'error');
+    }
     console.log(result);
     if(!result.play_date){ 
       navigate('/', { replace: true });
@@ -148,7 +161,7 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
             <Grid size={{xs:12, sm:11}}>
               <TextareaAutosize
                   aria-label="批次設定球員"
-                  minRows={3}
+                  minRows={3} maxRows={3}
                   placeholder="請複製名單並貼入此輸入區，「每列」將被視為1為球員，並新增至本日報名紀錄中"
                   style={{ width: '100%' }}
                 />

@@ -22,7 +22,7 @@ export type MyChildRef = { // 子暴露方法給父
 };
 type MyChildProps = { // 父傳方法給子
   updateBodyBlock: (status) => void;
-  reGetList: (where:any) => void;
+  reGetList: () => void;
   renewList: (idx, item) => void;
 };
 
@@ -41,11 +41,18 @@ const PlayDateModel = React.forwardRef<MyChildRef, MyChildProps>((
 
   const [index, setIndex] = React.useState(-1);
   const [form, setForm] = React.useState(JSON.parse(JSON.stringify(empty_data)));
-  const handleChange_d = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange_sd = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleChange(e)
     let { value } = e.target;
     if(value){
       setForm(prev => ({ ...prev, ['datetime2']: (value + ' ' + form.datetime2.split(' ')[1]) }));
+    }
+  }
+  const handleChange_st = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleChange(e)
+    let { value } = e.target;
+    if(value){
+      setForm(prev => ({ ...prev, ['datetime2']: (form.datetime2.split(' ')[0] + ' ' + value) }));
     }
   }
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,23 +89,29 @@ const PlayDateModel = React.forwardRef<MyChildRef, MyChildProps>((
     updateBodyBlock(true); //顯示遮蓋
     // console.log(form);
     let result:any = null;
-    if(form.id==-1){ // 新增
-      result = await functions.fetchData('POST', 'play_date', form);
-      if(result.msg){
-        showMessage(result.msg, 'error');
-      }else{
-        await reGetList(null);
-        setOpen(false);
+    try {
+      if(form.id==-1){ // 新增
+        result = await functions.fetchData('POST', 'play_date', form);
+        if(result.msg){
+          showMessage(result.msg, 'error');
+        }else{
+          await reGetList();
+          setOpen(false);
+        }
+      }else{ // 編輯
+        result = await functions.fetchData('PUT', 'play_date', form, {id:form.id});
+        if(result.msg){
+          showMessage(result.msg, 'error');
+        }else{
+          await renewList(index, form);
+          setOpen(false);
+        }
       }
-    }else{ // 編輯
-      result = await functions.fetchData('PUT', 'play_date', form, {id:form.id});
-      if(result.msg){
-        showMessage(result.msg, 'error');
-      }else{
-        await renewList(index, form);
-        setOpen(false);
-      }
+    } catch (error) {
+      // console.error('Error fetching data:', error);
+      showMessage('發生錯誤', 'error');
     }
+    
     updateBodyBlock(false); //隱藏遮蓋
   }
 
@@ -119,8 +132,8 @@ const PlayDateModel = React.forwardRef<MyChildRef, MyChildProps>((
             <Grid container spacing={2}>
               <Grid size={{xs:12}}>
                 <Stack direction={{xs:"column", md:"row"}} spacing={{xs:0, md:0}}>
-                  <TextField fullWidth variant="filled" size="small" onChange={handleChange_d} label="開始日期" name="datetime_d" value={form.datetime.split(' ')[0]} type="date"/>
-                  <TextField fullWidth variant="filled" size="small" onChange={handleChange} label="開始時間" name="datetime_t" value={form.datetime.split(' ')[1]} type="time"/>
+                  <TextField fullWidth variant="filled" size="small" onChange={handleChange_sd} label="開始日期" name="datetime_d" value={form.datetime.split(' ')[0]} type="date"/>
+                  <TextField fullWidth variant="filled" size="small" onChange={handleChange_st} label="開始時間" name="datetime_t" value={form.datetime.split(' ')[1]} type="time"/>
                 </Stack>
               </Grid>
               <Grid size={{xs:12}}>

@@ -25,7 +25,7 @@ export type MyChildRef = { // 子暴露方法給父
 };
 type MyChildProps = { // 父傳方法給子
   updateBodyBlock: (status) => void;
-  reGetList: (where:any) => void;
+  reGetList: () => void;
   renewList: (idx, item) => void;
 };
 
@@ -54,6 +54,9 @@ const UserModel = React.forwardRef<MyChildRef, MyChildProps>((
   const handleSelectChange = (event: SelectChangeEvent) => {
     let { name, value } = event.target;
     setForm(prev => ({ ...prev, [name]: value }));
+  };
+  const handleKeyDown = async(event) => {
+    if (event.key === 'Enter'){ handleSave(); }
   };
 
   // expose focus() method to parent
@@ -87,7 +90,7 @@ const UserModel = React.forwardRef<MyChildRef, MyChildProps>((
         if(result.msg){
           showMessage(result.msg, 'error');
         }else{
-          await reGetList(null);
+          await reGetList();
           setOpen(false);
         }
       }else{ // 編輯
@@ -100,10 +103,16 @@ const UserModel = React.forwardRef<MyChildRef, MyChildProps>((
         }
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      // console.error('Error fetching data:', error);
       const data = error?.response?.data;
-      if (typeof data === 'string' && data.match('email_cellphone_UNIQUE')) {
-        showMessage('信箱與手機同時與其人的資料重複', 'error');
+      if (typeof data === 'string') {
+        if(data.match('name_email_cellphone_UNIQUE')) {
+          showMessage('姓名&信箱&手機同時與其人的資料重複', 'error');
+        }else{
+          showMessage('發生錯誤', 'error');
+        }
+      }else{
+        showMessage('發生錯誤', 'error');
       }
     }
     updateBodyBlock(false); //隱藏遮蓋
@@ -124,23 +133,35 @@ const UserModel = React.forwardRef<MyChildRef, MyChildProps>((
         <DialogContent>
           <Grid container spacing={2}>
             <Grid size={{xs:12, sm:6}}>
-              <TextField fullWidth variant="filled" size="small" onChange={handleChange} label="姓名" name="name" value={form.name}/>
+              <TextField fullWidth variant="filled" size="small"
+                        onChange={handleChange} onKeyDown={handleKeyDown} 
+                        label="姓名" name="name" value={form.name}/>
             </Grid>
             <Grid size={{xs:12, sm:6}}>
-              <TextField fullWidth variant="filled" size="small" onChange={handleChange} label="LINE名稱" name="name_line" value={form.name_line}/>
+              <TextField fullWidth variant="filled" size="small"
+                        onChange={handleChange} onKeyDown={handleKeyDown} 
+                        label="LINE名稱" name="name_line" value={form.name_line}/>
             </Grid>
             <Grid size={{xs:12, sm:6}}>
-              <TextField fullWidth variant="filled" size="small" onChange={handleChange} label="綽號" name="name_nick" value={form.name_nick}/>
+              <TextField fullWidth variant="filled" size="small"
+                        onChange={handleChange} onKeyDown={handleKeyDown} 
+                        label="綽號" name="name_nick" value={form.name_nick}/>
             </Grid>
             <Grid size={{xs:12, sm:6}}>
-              <TextField fullWidth variant="filled" size="small" onChange={handleChange} label="信箱" name="email" value={form.email} type="email"/>
+              <TextField fullWidth variant="filled" size="small"
+                        onChange={handleChange} onKeyDown={handleKeyDown} 
+                        label="信箱" name="email" value={form.email} type="email"/>
             </Grid>
             <Grid size={{xs:12, sm:6}}>
-              <TextField fullWidth variant="filled" size="small" onChange={handleChange} label="手機" name="cellphone" value={form.cellphone}/>
+              <TextField fullWidth variant="filled" size="small"
+                        onChange={handleChange} onKeyDown={handleKeyDown} 
+                        label="手機" name="cellphone" value={form.cellphone}/>
             </Grid>
             <Grid size={{xs:12, sm:6}}>
               <Stack direction={{xs:"column", md:"row"}} spacing={2}>
-                <TextField fullWidth variant="filled" size="small" onChange={handleChange} label="等級" name="level" value={form.level} type="number"/>
+                <TextField fullWidth variant="filled" size="small"
+                          onChange={handleChange} onKeyDown={handleKeyDown} 
+                          label="等級" name="level" value={form.level} type="number"/>
                 <FormControl variant="filled" size="small" sx={{ minWidth: 75 }} >
                   <InputLabel id="userForm_gender">性別</InputLabel>
                   <Select

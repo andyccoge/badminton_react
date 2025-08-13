@@ -10,9 +10,11 @@ import TableRow from '@mui/material/TableRow';
 import Checkbox from '@mui/material/Checkbox';
 
 import SearchIcon from '@mui/icons-material/Search';
-import {TextField, Stack, Button} from '@mui/material';
-import {FormControl, InputLabel, MenuItem} from '@mui/material';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
+import {Button} from '@mui/material';
+
+import SearchFormModel, {
+  MyChildRef as SearchFormModelMyChildRef
+} from '../components/SearchFormModel';
 
 export const empty_searchForm = {
   ids:[],
@@ -64,6 +66,7 @@ export type MyChildRef = { // 子暴露方法給父
   showRows: (items:Array<Data>) => void;
   getSelectedIds: () => readonly number[];
   resetSelect: () => void;
+  goSearch: () => void;
 };
 type MyChildProps = { // 父傳方法給
   updateBodyBlock: (status) => void;
@@ -97,26 +100,26 @@ function TableUsers(
     resetSelect: () => {
       setSelected([]);
     },
+    goSearch: async() => { await goSearch(); },
   }));
 
   const [rows, setRows] = React.useState<Array<any>>([]);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(numPerPage>0 ? numPerPage : Number.MAX_VALUE);
-  const [serchform, setSearchForm] = React.useState(JSON.parse(JSON.stringify(where)));
 
   const handleChangePage = async (event: unknown, newPage: number) => {
     updateBodyBlock(true);
     setPage(newPage);
-    serchform['p'] = newPage;
-    setSearchForm(serchform);
-    await getData(serchform);
+    let tempSerchform:any = SearchFormModelRef.current?.getFormData();
+    tempSerchform['p'] = newPage;
+    await getData(tempSerchform);
     updateBodyBlock(false);
   };
   const handleChangeRowsPerPage = async (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(+event.target.value);
-    serchform['per_p_num'] = +event.target.value;
-    setSearchForm(serchform);
-    console.log(serchform);
+    let tempSerchform:any = SearchFormModelRef.current?.getFormData();
+    tempSerchform['per_p_num'] = +event.target.value;
+    console.log(tempSerchform);
     await goSearch();
   };
 
@@ -148,59 +151,45 @@ function TableUsers(
     setSelected(newSelected);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let { name, value } = e.target;
-    setSearchForm(prev => ({ ...prev, [name]: value }));
-  };
-  const handleKeyDown = async(event) => {
-    if (event.key === 'Enter'){ await goSearch(); }
-  };
-  const handleSelectChange = (event: SelectChangeEvent) => {
-    let { name, value } = event.target;
-    setSearchForm(prev => ({ ...prev, [name]: value }));
-  };
+  const SearchFormModelRef = React.useRef<SearchFormModelMyChildRef>(null);
   const goSearch = async () =>{
     updateBodyBlock(true);
     setRows([]);
     setPage(0);
-    serchform['p'] = 0;
-    await getData(serchform);
+    await new Promise((resolve) => { setTimeout(() => {resolve(null);}, 100); })
+    let tempSerchform:any = SearchFormModelRef.current?.getFormData();
+    tempSerchform['p'] = 0;
+    await getData(tempSerchform);
     updateBodyBlock(false);
   }
   const cleanSearch = async () =>{
-    setSearchForm(where);
-    await goSearch();
+    updateBodyBlock(true);
+    await getData(where);
+    updateBodyBlock(false);
   }
 
   return (<>
     {needSearch && <>
-      <Stack direction={"row"} spacing={0} flexWrap={'wrap'} justifyContent={'start'}>
-        <TextField variant="filled" size="small" onChange={handleChange} onKeyDown={handleKeyDown} label="信箱" name="email" value={serchform.email}/>
-        <TextField variant="filled" size="small" onChange={handleChange} onKeyDown={handleKeyDown} label="手機" name="cellphone" value={serchform.cellphone}/>
-        <TextField variant="filled" size="small" onChange={handleChange} onKeyDown={handleKeyDown} label="姓名/綽號/LINE名稱" name="name_keyword" value={serchform.name_keyword}/>
-        <TextField variant="filled" size="small" onChange={handleChange} onKeyDown={handleKeyDown} label="等級(以上)" name="level_over" value={serchform.level_over} type="number"/>
-        <FormControl variant="filled" size="small" sx={{ minWidth: 75 }} >
-          <InputLabel id="searchform_gender">性別</InputLabel>
-          <Select
-            labelId="searchform_gender"
-            name="gender"
-            value={serchform.gender}
-            onChange={handleSelectChange}
-            autoWidth
-            label="性別"
-          >
-            <MenuItem value=""><em></em></MenuItem>
-            <MenuItem value={1}>男</MenuItem>
-            <MenuItem value={2}>女</MenuItem>
-          </Select>
-        </FormControl>
-        <Button size="small" sx={{mr:'1rem',alignSelf:'center'}} onClick={goSearch}>
-          搜尋<SearchIcon />
-        </Button>
-        <Button size="small" sx={{alignSelf:'center'}} variant="text" color="info" onClick={cleanSearch}>
-          清除搜尋
-        </Button>
-      </Stack>
+      <Button size="small" sx={{mr:'1rem',alignSelf:'center'}} 
+              onClick={()=>{SearchFormModelRef.current?.setFormModel(true)}}>
+        搜尋設定<SearchIcon />
+      </Button>
+      <Button size="small" sx={{alignSelf:'center'}} variant="text" color="info" 
+              onClick={cleanSearch}>
+        清除篩選
+      </Button>
+      <SearchFormModel goSearch={goSearch}
+        formData={JSON.parse(JSON.stringify(where))}
+        formColumns={[
+          {label:'信箱', name:'email', type:'email', options:[],},
+          {label:'手機', name:'cellphone', type:'text', options:[],},
+          {label:'姓名/綽號/LINE名稱', name:'name_keyword', type:'text', options:[],},
+          {label:'等級(以上)', name:'level_over', type:'number', options:[], size:{xs:6}},
+          {label:'性別', name:'gender', type:'select', options:[
+            {text:'男', value:1},{text:'女', value:2},
+          ], size:{xs:6}},
+        ]}
+        ref={SearchFormModelRef} />
     </>}
     <Paper sx={{ width: '100%' }}>
       <TableContainer sx={{ maxHeight: 440 }}>

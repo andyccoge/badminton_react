@@ -91,7 +91,11 @@ function Main() {
           <DialogTitle>{confirmModelTitle}</DialogTitle>
           <DialogContent>
             <DialogContentText id="confirmModel">
-              {confirmModelMessage}
+              {confirmModelMessage.split("\n").map((sentence, idx) => (
+                <React.Fragment key={'DialogSentence-'+idx}>
+                  {sentence}<br />
+                </React.Fragment>
+              ))}
             </DialogContentText>
           </DialogContent>
           {confirmModelFunctionName &&

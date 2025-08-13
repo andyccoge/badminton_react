@@ -55,19 +55,26 @@ function Playdates({updateBodyBlock, showConfirmModelStatus}) {
         await getData();
 
       } catch (error) {
-        console.error('Error fetching data:', error);
+        // console.error('Error fetching data:', error);
+        showMessage('取得打球日資料發生錯誤', 'error');
       }
       updateBodyBlock(false); //關閉遮蓋
     })(); // Call the IIFE immediately
   }, []); // Empty dependency array ensures it runs only once on mount
 
-  const getData = async (where:any=null):Promise<any[]> => {
-    let result = await functions.fetchData('GET', 'play_date', null, where);
-    // console.log(result.data);
-    setCards(result.data);
-    // console.log(cards)
-    // console.log(card_group)
-    return result.data;
+  const getData = async (where:any=null):Promise<any> => {
+    try {
+      let result = await functions.fetchData('GET', 'play_date', null, where);
+      // console.log(result.data);
+      setCards(result.data);
+      // console.log(cards)
+      // console.log(card_group)
+      return result;
+    } catch (error) {
+      // console.error('Error fetching data:', error);
+      showMessage('取得打球日資料發生錯誤', 'error');
+      return {};
+    }
   }
   const getgetCurrentPlayTime = () => {
     const temp_d1 = new Date(today.getTime() + alertTime_s);
@@ -87,19 +94,24 @@ function Playdates({updateBodyBlock, showConfirmModelStatus}) {
   const getCurrentPlay = async ():Promise<void> => {
     setInitFinished(false);
     const [datetime_s, datetime_e] = getgetCurrentPlayTime();
-    let result = await functions.fetchData('GET', 'play_date', null, {
-      'datetime_s': datetime_s,
-      'datetime_e': datetime_e,
-    });
-    result.data.reverse();
-    setInitFinished(true);
-    setCurrentPlay(result.data);
-    // console.log(result.data);
+    try {
+      let result = await functions.fetchData('GET', 'play_date', null, {
+        'datetime_s': datetime_s,
+        'datetime_e': datetime_e,
+      });
+      result.data.reverse();
+      setInitFinished(true);
+      setCurrentPlay(result.data);
+      // console.log(result.data);
+    } catch (error) {
+      // console.error('Error fetching data:', error);
+      showMessage('取得當前打球日資料發生錯誤', 'error');
+    }
   }
 
-  const reGetList = async (where:any=null):Promise<any[]> => {
+  const reGetList = async () => {
     await getCurrentPlay();
-    let data = await getData(where);
+    let data = await getData();
     return data;
   }
   const renewList = async (idx, item)=>{
@@ -149,23 +161,47 @@ function Playdates({updateBodyBlock, showConfirmModelStatus}) {
   }
   const deletePlayDate = async (id, index) =>{
     let tempData = cards[index];
-    if(
-      confirm(`\
-        確定刪除以下打球日？
-        日期：`+tempData.datetime+`~`+tempData.datetime2+`
-        地點：`+tempData.location+`
-        備註：`+tempData.note+`
-      `)
-    ){
+  
+    const do_function = async():Promise<boolean> => {
       updateBodyBlock(true);
-      let result = await functions.fetchData('DELETE', 'play_date', null, {id:id});
-      if(result.msg){
-        showMessage(result.msg, 'error');
-      }else{
-        await reGetList();
+      let modelStatus = true;
+      updateBodyBlock(true);
+      try {
+        let result = await functions.fetchData('DELETE', 'play_date', null, {id:id});
+        if(result.msg){
+          showMessage(result.msg, 'error');
+        }else{
+          modelStatus = false;
+          await reGetList();
+        }
+      } catch (error) {
+        // console.error('Error fetching data:', error);
+        const data = error?.response?.data;
+        if (typeof data === 'string') {
+          if (data.match('fk_matchs_play_date')){
+            showMessage('有對應此打球日的比賽紀錄，不可刪除', 'error');
+          }else if (data.match('fk_reservations_play_date')){
+            showMessage('有對應此打球日的報名紀錄，不可刪除', 'error');
+          }else if (data.match('fk_courts_play_date')){
+            showMessage('有對應此打球日的場地紀錄，不可刪除', 'error');
+          }else{
+            showMessage('刪除打球日發生錯誤', 'error');
+          }
+        }else{
+          showMessage('刪除打球日發生錯誤', 'error');
+        }
       }
       updateBodyBlock(false);
+      return modelStatus;
     }
+    showConfirmModelStatus(
+      `確定刪除以下打球日？`,
+      `日期：`+tempData.datetime+`~`+tempData.datetime2+`
+      地點：`+tempData.location+`
+      備註：`+tempData.note+``,
+      '確認',
+      do_function
+    );
   }
 
   return (   
