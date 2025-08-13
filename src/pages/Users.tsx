@@ -140,12 +140,13 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
 
     try {
       let result = await functions.fetchData('POST', 'user_batch', {names:names});
-      if(result.repeat_name.lenth>0 || result.repeat_line>0){
+      if(result.repeat_name.length>0 || result.repeat_line.length>0){
         setRepeatName(result.repeat_name.join("\n"))
         setRepeatLine(result.repeat_line.join("\n"))
         setOkNames(result.ok_names.join("\n"))
         setbatchAddModelStatus(true)
       }
+      setBatchUserText('');
       await TableUsersRef.current?.goSearch();
       showMessage('球員已新增', 'success');
     } catch (error) {
