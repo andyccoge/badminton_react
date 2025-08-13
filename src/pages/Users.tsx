@@ -145,10 +145,11 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
         setRepeatLine(result.repeat_line.join("\n"))
         setOkNames(result.ok_names.join("\n"))
         setbatchAddModelStatus(true)
+      }else{
+        setBatchUserText('');
+        await TableUsersRef.current?.goSearch();
+        showMessage('球員已新增', 'success');
       }
-      setBatchUserText('');
-      await TableUsersRef.current?.goSearch();
-      showMessage('球員已新增', 'success');
     } catch (error) {
       // console.error('Error fetching data:', error);
       showMessage('發生錯誤', 'error');
