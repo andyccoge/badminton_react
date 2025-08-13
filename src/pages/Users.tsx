@@ -113,15 +113,15 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
   const [repeatName, setRepeatName] = React.useState<string>();
   const [repeatLine, setRepeatLine] = React.useState<string>();
   const [OkNames, setOkNames] = React.useState<string>();
-  async function batchAdd() {
+  async function batchAdd(tempStr:string='') {
     if(!batchUserText.trim()){
       showMessage('請設定名單，以「換行」分隔球員', 'error');
       return;
     }
     updateBodyBlock(true); //顯示遮蓋
     // await new Promise((resolve) => { setTimeout(() => {resolve(null);}, 100); })
-
-    let rows = batchUserText.trim().split("\n");
+    let temp = tempStr ? tempStr : batchUserText;
+    let rows = temp.trim().split("\n");
     let names = rows.map((row)=>{
       let word_s = row.split('.');
       let words = word_s.length>1 ? word_s.slice(1).join('.') : word_s[0];
@@ -161,7 +161,7 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
     tempStr += OkNames ? ("\n"+OkNames)?.toString() : '';
     setBatchUserText(tempStr);
     setbatchAddModelStatus(false);
-    await batchAdd();
+    await batchAdd(tempStr);
     updateBodyBlock(false); //隱藏遮蓋
   }
 
@@ -197,7 +197,7 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
             />
         </Grid>
         <Grid size={{xs:12, sm:1}}>
-          <Button onClick={batchAdd}>送出</Button>
+          <Button onClick={()=>{batchAdd()}}>送出</Button>
         </Grid>
       </Grid>
       <React.Fragment>
