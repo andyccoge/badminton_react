@@ -6,6 +6,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {Box, Grid, Skeleton, Divider} from '@mui/material';
 import {Card,CardContent} from '@mui/material';
 import {Button, Typography, TextareaAutosize} from '@mui/material';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import Fab from '@mui/material/Fab';
+import AddIcon from '@mui/icons-material/Add';
 
 import {TabContext, TabList, TabPanel} from '@mui/lab';
 import {Tabs, Tab} from '@mui/material';
@@ -17,15 +20,21 @@ import AdminNav from '../components/AdminNav.tsx'
 import TableUsers, {
   MyChildRef as TableUsersMyChildRef, empty_searchForm as emptyUserSearchForm
 } from '../components/TableUsers.tsx';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import UserModel, {MyChildRef as UserModelMyChildRef} from '../components/UserModel';
+
+import TableCourts, {
+  MyChildRef as TableCourtsMyChildRef, empty_searchForm as emptyCourtSearchForm
+} from '../components/TableCourts.tsx';
+import CourtModel, {MyChildRef as CourtModelMyChildRef} from '../components/CourtModel';
 
 import {Dialog,DialogActions,DialogContent,DialogContentText,DialogTitle} from '@mui/material';
 import { FormHelperText } from '@mui/material';
 
 const numPerPage = 0; /*列表一頁顯示數量(0表示不使用分頁功能)*/
-const defaultWhere = emptyUserSearchForm;
-defaultWhere['per_p_num'] = numPerPage;
+const defaulUsertWhere = emptyUserSearchForm;
+defaulUsertWhere['per_p_num'] = numPerPage;
+const defaulCourtWhere = emptyCourtSearchForm;
+defaulCourtWhere['per_p_num'] = numPerPage;
 
 function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   const { enqueueSnackbar } = useSnackbar();
@@ -35,7 +44,7 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const play_date_id = searchParams.get('id');
-  defaultWhere['play_date_id'] = play_date_id;
+  defaulUsertWhere['play_date_id'] = play_date_id;
 
   const [initFinished, setInitFinished] = React.useState(false);
   const [courtType, setCourtType] = React.useState<any[]>([]);
@@ -62,8 +71,8 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
         setCards([result.play_date]);
         setReservations(result.reservations);
         setUserMap(result.user_map);
-        TableUsersRef.current?.resetSelect();
         TableUsersRef.current?.showRows(result.reservations);
+        TableCourtsRef.current?.showRows(result.courts);
       } catch (error) {
         // console.error('Error fetching data:', error);
         showMessage('取得打球日完整設定資料發生錯誤', 'error');
@@ -79,10 +88,28 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   }
 
 
+  const [tabInit, setTabInit] = React.useState([false,false,false]);
   const [tabValue, setTabValue] = React.useState('tab1');
   const handleTabChange = (event: React.SyntheticEvent, newTabValue: string) => {
     setTabValue(newTabValue);
   };
+  React.useEffect(() => {
+    if (tabValue === 'tab1' && TableUsersRef.current && !tabInit[0]) {
+      TableUsersRef.current?.showRows(reservations);
+      tabInit[0] = true;
+      setTabInit(tabInit);
+    }
+    else if(tabValue === 'tab2' && TableCourtsRef.current && !tabInit[1]){
+      TableCourtsRef.current?.showRows(courts);
+      tabInit[1] = true;
+      setTabInit(tabInit);
+    }
+    // else if(tabValue === 'tab3' && TableMatchsRef.current && !tabInit[2]){
+    //   TableMatchsRef.current?.showRows(matchs);
+    //   tabInit[2] = true;
+    //   setTabInit(tabInit);
+    // }
+  }, [tabValue]);
 
   const [batchUserText, setBatchUserText] = React.useState("");
   const [batchAddModelStatus, setbatchAddModelStatus] = React.useState(false);
@@ -113,7 +140,7 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
       }
     } catch (error) {
       // console.error('Error fetching data:', error);
-      showMessage('發生錯誤', 'error');
+      showMessage('批次設定報名紀錄發生錯誤', 'error');
     }
     updateBodyBlock(false); //隱藏遮蓋
   }
@@ -143,7 +170,7 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
       showMessage('取得報名紀錄資料發生錯誤', 'error');
     }
   }
-  const deleteSelectedIds = async ()=>{
+  const deleteSelectedUserIds = async ()=>{
     let selectedIds = TableUsersRef.current?.getSelectedIds();
     console.log(selectedIds);
     if(selectedIds?.length==0){
@@ -162,7 +189,7 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
         }
       } catch (error) {
         // console.error('Error fetching data:', error);
-        showMessage('發生錯誤', 'error');
+        showMessage('刪除報名紀錄發生錯誤', 'error');
       }
       updateBodyBlock(false);
       return modelStatus;
@@ -177,17 +204,85 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   const clickTableUsers = (idx:number, item:any) => {
     // console.log(item);
     if(idx<0 && idx>=reservations.length){ return; }
-    userModelRef.current?.setModel(idx, item); // 呼叫 child 的方法
+    UserModelRef.current?.setModel(idx, item); // 呼叫 child 的方法
   }
 
-  const userModelRef = React.useRef<UserModelMyChildRef>(null);
-  const reGetList = async () => {
+  const UserModelRef = React.useRef<UserModelMyChildRef>(null);
+  const reGetListUsers = async () => {
     TableUsersRef.current?.goSearch();
   }
-  const renewList = async (idx, item)=>{
+  const renewListUsers = async (idx, item)=>{
     reservations[idx] = item;
     setReservations(reservations);
     TableUsersRef.current?.showRows(reservations);
+  }
+
+  const TableCourtsRef = React.useRef<TableCourtsMyChildRef>(null);
+  const getCourts = async(where:any={}) => {
+    try {
+      let result = await functions.fetchData('GET', 'courts', null, where);
+      setReservations(result.data);
+      TableCourtsRef.current?.resetSelect();
+      TableCourtsRef.current?.showRows(result.data);
+    } catch (error) {
+      // console.error('Error fetching data:', error);
+      showMessage('取得場地紀錄資料發生錯誤', 'error');
+    }
+  }
+  const deleteSelectedCourtIds = async ()=>{
+    let selectedIds = TableCourtsRef.current?.getSelectedIds();
+    console.log(selectedIds);
+    if(selectedIds?.length==0){
+      showMessage('請勾選刪除項目', 'error');return;
+    }
+    const do_function = async():Promise<boolean> => {
+      updateBodyBlock(true);
+      let modelStatus = true;
+      try {
+        let result = await functions.fetchData('DELETE', 'courts', null, {ids:selectedIds});
+        if(result.msg){
+          showMessage(result.msg, 'error');
+        }else{
+          modelStatus = false;
+          TableCourtsRef.current?.goSearch();
+        }
+      } catch (error) {
+        // console.error('Error fetching data:', error);
+        const data = error?.response?.data;
+        if (typeof data === 'string') {
+          if (data.match('fk_matchs_courts')){
+            showMessage('有對應此場地的比賽紀錄，不可刪除', 'error');
+          }else{
+            showMessage('刪除場地紀錄發生錯誤', 'error');
+          }
+        }else{
+          showMessage('刪除場地紀錄發生錯誤', 'error');
+        }
+      }
+      updateBodyBlock(false);
+      return modelStatus;
+    }
+    showConfirmModelStatus(
+      `確認刪除？`,
+      `即將刪除勾選的【`+ selectedIds?.length + `】個場地紀錄，確認執行嗎？`,
+      '確認',
+      do_function
+    );
+  }
+  const clickTableCourts = (idx:number, item:any) => {
+    // console.log(item);
+    if(idx<0 && idx>=reservations.length){ return; }
+    CourtModelRef.current?.setModel(idx, item); // 呼叫 child 的方法
+  }
+
+  const CourtModelRef = React.useRef<CourtModelMyChildRef>(null);
+  const reGetListCourts = async () => {
+    TableCourtsRef.current?.goSearch();
+  }
+  const renewListCourts = async (idx, item)=>{
+    courts[idx] = item;
+    setReservations(courts);
+    TableCourtsRef.current?.showRows(courts);
   }
 
   return (   
@@ -264,18 +359,36 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
           <TableUsers updateBodyBlock={updateBodyBlock}
                             getData={getReservation}
                             clickFirstCell={clickTableUsers}
-                            where={defaultWhere}
+                            where={defaulUsertWhere}
                             numPerPage={0}
                             needCheckBox={true}
                             ref={TableUsersRef}/>
           <Box textAlign="left" sx={{mt:'1rem'}}>
-            <Button size="small" variant="contained" color='error' onClick={deleteSelectedIds}>
+            <Button size="small" variant="contained" color='error' onClick={deleteSelectedUserIds}>
               <DeleteForeverIcon />
             </Button>
           </Box>
         </TabPanel>
         <TabPanel value="tab2">
-          <Typography variant='h6' textAlign="left">場地記錄</Typography>
+          <Typography variant='h6' textAlign="left">
+            <Box sx={{marginRight: '1rem', display:'inline-block'}}>場地記錄</Box>
+            <Fab size="small" color="secondary" aria-label="add"
+                onClick={()=>{CourtModelRef.current?.setModel(-1, {play_date_id:play_date_id})}}
+              ><AddIcon />
+            </Fab>
+          </Typography>
+          <TableCourts updateBodyBlock={updateBodyBlock}
+                            getData={getCourts}
+                            clickFirstCell={clickTableCourts}
+                            where={defaulCourtWhere}
+                            numPerPage={0}
+                            needCheckBox={true}
+                            ref={TableCourtsRef}/>
+          <Box textAlign="left" sx={{mt:'1rem'}}>
+            <Button size="small" variant="contained" color='error' onClick={deleteSelectedCourtIds}>
+              <DeleteForeverIcon />
+            </Button>
+          </Box>
         </TabPanel>
         <TabPanel value="tab3">
           <Typography variant='h6' textAlign="left">比賽記錄</Typography>
@@ -285,9 +398,14 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
       <Box margin={'3rem'}></Box>
 
       <UserModel updateBodyBlock={updateBodyBlock}
-                  reGetList={reGetList}
-                  renewList={renewList}
-                  ref={userModelRef} />
+                  reGetList={reGetListUsers}
+                  renewList={renewListUsers}
+                  ref={UserModelRef} />
+      <CourtModel updateBodyBlock={updateBodyBlock}
+                  reGetList={reGetListCourts}
+                  renewList={renewListCourts}
+                  ref={CourtModelRef} />
+                  
       <React.Fragment>
         <Dialog
           open={batchAddModelStatus}

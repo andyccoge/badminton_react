@@ -80,10 +80,10 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
           ){
             showMessage('此球員有比賽紀錄，不可刪除', 'error');
           }else{
-            showMessage('發生錯誤', 'error');
+            showMessage('刪除球員發生錯誤', 'error');
           }
         }else{
-          showMessage('發生錯誤', 'error');
+          showMessage('刪除球員發生錯誤', 'error');
         }
       }
       updateBodyBlock(false);
@@ -131,7 +131,7 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
       }
     } catch (error) {
       // console.error('Error fetching data:', error);
-      showMessage('發生錯誤', 'error');
+      showMessage('批次新增球員發生錯誤', 'error');
     }
     updateBodyBlock(false); //隱藏遮蓋
   }

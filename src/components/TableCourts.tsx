@@ -18,17 +18,14 @@ import SearchFormModel, {
 
 export const empty_searchForm = {
   ids:[],
-  email: '',
-  cellphone: '',
-  gender: '',
-  name_keyword: '',
-  level_over: '',
+  code:'',
+  type:'',
   p: 0,
   per_p_num: 0,
 };
 
 interface Column {
-  id: 'name' | 'name_nick' | 'name_line' | 'gender' | 'level' | 'cellphone' | 'email';
+  id: 'code' | 'type' ;
   label: string;
   minWidth?: number;
   align?: 'right';
@@ -36,29 +33,15 @@ interface Column {
 }
 
 const columns: Column[] = [
-  { id: 'name', label: '姓名', minWidth: 100 },
-  { id: 'name_nick', label: '綽號', minWidth: 100 },
-  { id: 'name_line', label: 'LINE名稱', minWidth: 100 },
-  { 
-    id: 'gender', 
-    label: '性別', 
-    minWidth: 62,
-    format: (value: number) => ['', '男', '女'][value]
-  },
-  { id: 'level', label: '等級', minWidth: 62 },
-  { id: 'cellphone', label: '手機', minWidth: 100 },
-  { id: 'email', label: '信箱', minWidth: 150 },
+  { id: 'code', label: '編號', minWidth: 100 },
+  { id: 'type', label: '類型', minWidth: 100, format: (value: number) => ['', '比賽', '預備'][value] },
 ];
 
 interface Data {
   id:number,
-  name:string,
-  name_line:string,
-  name_nick:string,
-  email:string,
-  cellphone:string,
-  gender:number,
-  level:number,
+  play_date_id:number,
+  code:string,
+  type:number,
 }
 
 
@@ -79,7 +62,7 @@ type MyChildProps = { // 父傳方法給
   needCheckBox?: boolean,
   needTool?: boolean,
 };
-function TableUsers(
+function TableCourts(
   { 
     updateBodyBlock, getData, clickFirstCell, where={}, countTotal=0, 
     numPerPage=10, needSearch=true, needCheckBox=false, needTool=false,
@@ -177,12 +160,9 @@ function TableUsers(
       <SearchFormModel goSearch={goSearch}
         formData={JSON.parse(JSON.stringify(where))}
         formColumns={[
-          {label:'信箱', name:'email', type:'email', options:[],},
-          {label:'手機', name:'cellphone', type:'text', options:[],},
-          {label:'姓名/綽號/LINE名稱', name:'name_keyword', type:'text', options:[],},
-          {label:'等級(以上)', name:'level_over', type:'number', options:[], size:{xs:6}},
-          {label:'性別', name:'gender', type:'select', options:[
-            {text:'男', value:1},{text:'女', value:2},
+          {label:'場地編號', name:'code', type:'text', options:[],},
+          {label:'類型', name:'type', type:'select', options:[
+            {text:'比賽', value:1},{text:'預備', value:2},
           ], size:{xs:6}},
         ]}
         ref={SearchFormModelRef} />
@@ -279,4 +259,4 @@ function TableUsers(
     </Paper>
   </>);
 }
-export default React.forwardRef<MyChildRef, MyChildProps>(TableUsers);
+export default React.forwardRef<MyChildRef, MyChildProps>(TableCourts);
