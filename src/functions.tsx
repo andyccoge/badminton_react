@@ -90,3 +90,24 @@ export function createEnqueueSnackbar(enqueueSnackbar:Function){
     });
   }; 
 }
+
+// 回傳 textarea 內的球員名稱
+export function getTextareaUserNames(text:string): string[]{
+  let rows = text.trim().split("\n");
+  let names = rows.map((row)=>{
+    let word_s = row.split('.');
+    let words = word_s.length>1 ? word_s.slice(1).join('.') : word_s[0];
+    if(words.match('@')){
+      let temp = words.split('@').slice(0,-1).join('@').trim();
+      if(temp){
+        words = temp;
+      }else{
+        words = words.split('@').slice(1).join('@');
+      }
+    }
+    return words.trim();
+  })
+  .filter((item)=>{ return item.trim(); });
+
+  return names;
+}

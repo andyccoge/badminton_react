@@ -17,14 +17,25 @@ import AdminNav from '../components/AdminNav.tsx'
 import TableUsers, {
   MyChildRef as TableUsersMyChildRef, empty_searchForm as emptyUserSearchForm
 } from '../components/TableUsers.tsx';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import UserModel, {MyChildRef as UserModelMyChildRef} from '../components/UserModel';
+
+import {Dialog,DialogActions,DialogContent,DialogContentText,DialogTitle} from '@mui/material';
+import { FormHelperText } from '@mui/material';
+
+const numPerPage = 0; /*列表一頁顯示數量(0表示不使用分頁功能)*/
+const defaultWhere = emptyUserSearchForm;
+defaultWhere['per_p_num'] = numPerPage;
 
 function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   const { enqueueSnackbar } = useSnackbar();
   const showMessage = functions.createEnqueueSnackbar(enqueueSnackbar);
 
+  // 預設篩選條件(限本打球日)
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const play_date_id = searchParams.get('id');
+  defaultWhere['play_date_id'] = play_date_id;
 
   const [initFinished, setInitFinished] = React.useState(false);
   const [courtType, setCourtType] = React.useState<any[]>([]);
@@ -34,73 +45,151 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   const [reservations, setReservations] = React.useState<any[]>([]);
   const [user_map, setUserMap] = React.useState<any>({});
 
-  const [userSearchForm, setuserSearchForm] = React.useState(JSON.parse(JSON.stringify(emptyUserSearchForm)));
-  const TableUsersRef = React.useRef<TableUsersMyChildRef>(null);
+  React.useEffect(() => {
+    (async () => {
+      updateBodyBlock(true); //顯示遮蓋
+      setInitFinished(false);
+      try {
+        let result = await functions.fetchData('GET', 'play_date_data', null, {id:play_date_id});
+        console.log(result);
+        if(!result.play_date){ 
+          navigate('/', { replace: true });
+          return {};
+        }
+        setCourtType(result.court_type);
+        setCourts(result.courts);
+        setMatchs(result.matchs);
+        setCards([result.play_date]);
+        setReservations(result.reservations);
+        setUserMap(result.user_map);
+        TableUsersRef.current?.resetSelect();
+        TableUsersRef.current?.showRows(result.reservations);
+      } catch (error) {
+        // console.error('Error fetching data:', error);
+        showMessage('取得打球日完整設定資料發生錯誤', 'error');
+      }
+      setInitFinished(true);
+      updateBodyBlock(false); //關閉遮蓋
+    })(); // Call the IIFE immediately
+  }, []); // Empty dependency array ensures it runs only once on mount
+
+  const doPlayDate = (id) =>{
+    let view_url = '/play?id='+id;
+    console.log(view_url);
+  }
+
 
   const [tabValue, setTabValue] = React.useState('tab1');
   const handleTabChange = (event: React.SyntheticEvent, newTabValue: string) => {
     setTabValue(newTabValue);
   };
 
-  React.useEffect(() => {
-    (async () => {
-      updateBodyBlock(true); //顯示遮蓋
-      try {
-        await getAllData(Number(play_date_id));
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        showMessage('取得打球日完整設定資料發生錯誤', 'error');
+  const [batchUserText, setBatchUserText] = React.useState("");
+  const [batchAddModelStatus, setbatchAddModelStatus] = React.useState(false);
+  const [repeatName, setRepeatName] = React.useState<string>();
+  const [fuzzyNames, setFuzzyNamesNames] = React.useState<string>();
+  const [OkNames, setOkNames] = React.useState<string>();
+  async function batchAdd(tempStr:string='') {
+    if(!batchUserText.trim()){
+      showMessage('請設定名單，以「換行」分隔球員', 'error');
+      return;
+    }
+    updateBodyBlock(true); //顯示遮蓋
+    // await new Promise((resolve) => { setTimeout(() => {resolve(null);}, 100); })
+    let names = functions.getTextareaUserNames(tempStr ? tempStr : batchUserText);
+    console.log(names);
+
+    try {
+      let result = await functions.fetchData('PUT', 'user_batch', {names:names, play_date_id:play_date_id});
+      if(result.repeat_name.length>0 || result.fuzzy_names.length>0){
+        setRepeatName(result.repeat_name.join("\n"))
+        setFuzzyNamesNames(result.fuzzy_names.join("\n"))
+        setOkNames(result.ok_names.join("\n"))
+        setbatchAddModelStatus(true)
+      }else{
+        setBatchUserText('');
+        await TableUsersRef.current?.goSearch();
+        showMessage('報名紀錄已新增', 'success');
       }
-      updateBodyBlock(false); //關閉遮蓋
-    })(); // Call the IIFE immediately
-  }, []); // Empty dependency array ensures it runs only once on mount
-
-  const getAllData = async (play_date_id:number=0):Promise<any> => {
-    setInitFinished(false);
-    let result:any;
-    try {
-      result = await functions.fetchData('GET', 'play_date_data', null, {id:play_date_id});
     } catch (error) {
       // console.error('Error fetching data:', error);
       showMessage('發生錯誤', 'error');
     }
-    console.log(result);
-    if(!result.play_date){ 
-      navigate('/', { replace: true });
-      return {};
-    }
-    setCourtType(result.court_type);
-    setCourts(result.courts);
-    setMatchs(result.matchs);
-    setCards([result.play_date]);
-    setReservations(result.reservations);
-    setUserMap(result.user_map);
-    setInitFinished(true);
-    return result;
+    updateBodyBlock(false); //隱藏遮蓋
   }
-  const getReservation = async(play_date_id:number=0):Promise<any> => {
-    userSearchForm['play_date_id'] = play_date_id;
-    let result:any;
-    try {
-      result = await functions.fetchData('GET', 'reservations', null, userSearchForm);
-    } catch (error) {
-      // console.error('Error fetching data:', error);
-      showMessage('發生錯誤', 'error');
-    }
-    console.log(result);
-    if(!result.play_date){ 
-      navigate('/', { replace: true });
-      return {};
-    }
-    setReservations(result.reservations);
-    return result;
+  async function sendNames() {
+    updateBodyBlock(true); //顯示遮蓋
+    // await new Promise((resolve) => { setTimeout(() => {resolve(null);}, 100); })
+    let tempStr = '';
+    tempStr += repeatName ? ("\n"+repeatName)?.toString() : '';
+    tempStr += fuzzyNames ? ("\n"+fuzzyNames)?.toString() : '';
+    tempStr += OkNames ? ("\n"+OkNames)?.toString() : '';
+    tempStr = tempStr.trim();
+    setBatchUserText(tempStr);
+    setbatchAddModelStatus(false);
+    await batchAdd(tempStr);
+    updateBodyBlock(false); //隱藏遮蓋
   }
 
-  const doPlayDate = (id) =>{
-    let view_url = '/play?id='+id;
-    console.log(view_url);
+  const TableUsersRef = React.useRef<TableUsersMyChildRef>(null);
+  const getReservation = async(where:any={}) => {
+    try {
+      let result = await functions.fetchData('GET', 'reservations', null, where);
+      setReservations(result.data);
+      TableUsersRef.current?.resetSelect();
+      TableUsersRef.current?.showRows(result.data);
+    } catch (error) {
+      // console.error('Error fetching data:', error);
+      showMessage('取得報名紀錄資料發生錯誤', 'error');
+    }
   }
-  
+  const deleteSelectedIds = async ()=>{
+    let selectedIds = TableUsersRef.current?.getSelectedIds();
+    console.log(selectedIds);
+    if(selectedIds?.length==0){
+      showMessage('請勾選刪除項目', 'error');return;
+    }
+    const do_function = async():Promise<boolean> => {
+      updateBodyBlock(true);
+      let modelStatus = true;
+      try {
+        let result = await functions.fetchData('DELETE', 'reservations', null, {ids:selectedIds});
+        if(result.msg){
+          showMessage(result.msg, 'error');
+        }else{
+          modelStatus = false;
+          TableUsersRef.current?.goSearch();
+        }
+      } catch (error) {
+        // console.error('Error fetching data:', error);
+        showMessage('發生錯誤', 'error');
+      }
+      updateBodyBlock(false);
+      return modelStatus;
+    }
+    showConfirmModelStatus(
+      `確認刪除？`,
+      `即將刪除勾選的【`+ selectedIds?.length + `】個報名紀錄，確認執行嗎？`,
+      '確認',
+      do_function
+    );
+  }
+  const clickTableUsers = (idx:number, item:any) => {
+    // console.log(item);
+    if(idx<0 && idx>=reservations.length){ return; }
+    userModelRef.current?.setModel(idx, item); // 呼叫 child 的方法
+  }
+
+  const userModelRef = React.useRef<UserModelMyChildRef>(null);
+  const reGetList = async () => {
+    TableUsersRef.current?.goSearch();
+  }
+  const renewList = async (idx, item)=>{
+    reservations[idx] = item;
+    setReservations(reservations);
+    TableUsersRef.current?.showRows(reservations);
+  }
+
   return (   
     <>
       <header id="header_nav"><AdminNav /></header>
@@ -157,24 +246,33 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
       <TabContext value={tabValue}>
         <TabPanel value="tab1">
           <Typography variant='h6' textAlign="left">報名紀錄</Typography>
-          <Grid container spacing={0}>
+          <Grid container spacing={0} sx={{mb:'1rem'}}>
             <Grid size={{xs:12, sm:11}}>
               <TextareaAutosize
                   aria-label="批次設定球員"
                   minRows={3} maxRows={3}
                   placeholder="請複製名單並貼入此輸入區，「每列」將被視為1為球員，並新增至本日報名紀錄中"
                   style={{ width: '100%' }}
+                  value={batchUserText}
+                  onChange={(e) => setBatchUserText(e.target.value)}
                 />
             </Grid>
             <Grid size={{xs:12, sm:1}}>
-              <Button>送出</Button>
+              <Button onClick={()=>{batchAdd()}}>送出</Button>
             </Grid>
           </Grid>
           <TableUsers updateBodyBlock={updateBodyBlock}
                             getData={getReservation}
-                            where={userSearchForm}
+                            clickFirstCell={clickTableUsers}
+                            where={defaultWhere}
                             numPerPage={0}
+                            needCheckBox={true}
                             ref={TableUsersRef}/>
+          <Box textAlign="left" sx={{mt:'1rem'}}>
+            <Button size="small" variant="contained" color='error' onClick={deleteSelectedIds}>
+              <DeleteForeverIcon />
+            </Button>
+          </Box>
         </TabPanel>
         <TabPanel value="tab2">
           <Typography variant='h6' textAlign="left">場地記錄</Typography>
@@ -185,6 +283,65 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
       </TabContext>
 
       <Box margin={'3rem'}></Box>
+
+      <UserModel updateBodyBlock={updateBodyBlock}
+                  reGetList={reGetList}
+                  renewList={renewList}
+                  ref={userModelRef} />
+      <React.Fragment>
+        <Dialog
+          open={batchAddModelStatus}
+          keepMounted
+          onClose={()=>{setbatchAddModelStatus(false)}}
+          aria-describedby="alert-dialog-slide-description"
+        >
+          <DialogTitle sx={{pb:'0.5rem'}}>
+            {"重複資料處理"}
+            <Typography variant="body2" gutterBottom>完成操作後請點「送出」再次進行資料新增</Typography>
+          </DialogTitle>
+          <DialogContent>
+            <FormHelperText error={true}>此區球員重複報名，請修改or刪除後再次送出資料</FormHelperText>
+            <TextareaAutosize
+              aria-label="重複報名名單"
+              minRows={3} maxRows={3}
+              placeholder="此區球員重複報名，請修改or刪除後再次送出資料"
+              style={{ width: '100%', marginBottom:'1rem', }}
+              value={repeatName}
+              onChange={(e) => setRepeatName(e.target.value)}
+            />
+            
+            <FormHelperText error={true}>
+              此區名單在系統中對應到多個球員，請保留「:」後的一組資料，其餘請刪除，然後重新送出。<br />
+              ex： 安安:[陳彥安,安仔,男] 對應關係如右=&gt; LINE名稱:[姓名,綽號,性別]
+            </FormHelperText>
+            <TextareaAutosize
+              aria-label="模糊名稱名單"
+              minRows={3} maxRows={3}
+              placeholder={
+                "此區名單在系統中對應到多個球員，請保留「:」後的一組資料，其餘請刪除，然後重新送出。"+"\n"+
+                "ex： 安安:[陳彥安,安仔,男]"
+              }
+              style={{ width: '100%', marginBottom:'1rem', }}
+              value={fuzzyNames}
+              onChange={(e) => setFuzzyNamesNames(e.target.value)}
+            />
+
+            <FormHelperText error={false}>可新增名單(新名單將自動建立「球員資料」)</FormHelperText>
+            <TextareaAutosize
+              aria-label="可新增名單"
+              minRows={3} maxRows={3}
+              placeholder="可新增名單(新名單將自動建立「球員資料」"
+              style={{ width: '100%', marginBottom:'1rem', }}
+              value={OkNames}
+              onChange={(e) => setOkNames(e.target.value)}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={()=>{setbatchAddModelStatus(false)}} size="small" color="secondary">取消</Button>
+            <Button onClick={()=>{sendNames()}} size="medium" color="primary">送出</Button>
+          </DialogActions>
+        </Dialog>
+      </React.Fragment>
     </>
   )
 }

@@ -26,15 +26,13 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
   const { enqueueSnackbar } = useSnackbar();
   const showMessage = functions.createEnqueueSnackbar(enqueueSnackbar);
 
-  const [initFinished, setInitFinished] = React.useState(false);
   const [users, setUers] = React.useState<any[]>([]);
-  const TableUsersRef = React.useRef<TableUsersMyChildRef>(null);
 
   React.useEffect(() => {
     (async () => {
       updateBodyBlock(true); //顯示遮蓋
       try {
-        await getUsers(defaultWhere);
+        await TableUsersRef.current?.goSearch();
       } catch (error) {
         // console.error('Error fetching data:', error);
         showMessage('取得球員資料發生錯誤', 'error');
@@ -44,9 +42,6 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
   }, []); // Empty dependency array ensures it runs only once on mount
 
   const getUsers = async (where:any={}) => {
-    setInitFinished(false);
-    where = JSON.parse(JSON.stringify(where))
-    if('ids' in where){ where['ids'] = JSON.stringify(where['ids']) }
     try {
       let result = await functions.fetchData('GET', 'users', null, where);
       setUers(result.data);
@@ -55,7 +50,6 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
     } catch (error) {
       showMessage('取得球員資料發生錯誤', 'error');
     }
-    setInitFinished(true);
   }
   const deleteSelectedIds = async ()=>{
     let selectedIds = TableUsersRef.current?.getSelectedIds();
@@ -113,33 +107,18 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
   const [repeatName, setRepeatName] = React.useState<string>();
   const [repeatLine, setRepeatLine] = React.useState<string>();
   const [OkNames, setOkNames] = React.useState<string>();
-  async function batchAdd(tempStr:string='') {
+  async function batchAdd(tempStr:string='',  batchUserForceAdd:string='') {
     if(!batchUserText.trim()){
       showMessage('請設定名單，以「換行」分隔球員', 'error');
       return;
     }
     updateBodyBlock(true); //顯示遮蓋
     // await new Promise((resolve) => { setTimeout(() => {resolve(null);}, 100); })
-    let temp = tempStr ? tempStr : batchUserText;
-    let rows = temp.trim().split("\n");
-    let names = rows.map((row)=>{
-      let word_s = row.split('.');
-      let words = word_s.length>1 ? word_s.slice(1).join('.') : word_s[0];
-      if(words.match('@')){
-        let temp = words.split('@').slice(0,-1).join('@').trim();
-        if(temp){
-          words = temp;
-        }else{
-          words = words.split('@').slice(1).join('@');
-        }
-      }
-      return words.trim();
-    })
-    .filter((item)=>{ return item.trim(); });
+    let names = functions.getTextareaUserNames(tempStr ? tempStr : batchUserText);
     console.log(names);
 
     try {
-      let result = await functions.fetchData('POST', 'user_batch', {names:names});
+      let result = await functions.fetchData('POST', 'user_batch', {names:names, force:batchUserForceAdd});
       if(result.repeat_name.length>0 || result.repeat_line.length>0){
         setRepeatName(result.repeat_name.join("\n"))
         setRepeatLine(result.repeat_line.join("\n"))
@@ -160,20 +139,23 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
     updateBodyBlock(true); //顯示遮蓋
     // await new Promise((resolve) => { setTimeout(() => {resolve(null);}, 100); })
     let tempStr = '';
-    tempStr += repeatName?.toString();
+    tempStr += repeatName ? ("\n"+repeatName)?.toString() : '';
     tempStr += repeatLine ? ("\n"+repeatLine)?.toString() : '';
     tempStr += OkNames ? ("\n"+OkNames)?.toString() : '';
+    tempStr = tempStr.trim();
     setBatchUserText(tempStr);
     setbatchAddModelStatus(false);
-    await batchAdd(tempStr);
+    await batchAdd(tempStr, 'force');
     updateBodyBlock(false); //隱藏遮蓋
   }
 
-  const userModelRef = React.useRef<UserModelMyChildRef>(null);
+  const TableUsersRef = React.useRef<TableUsersMyChildRef>(null);
   const clickTableUsers = (idx:number, item:any) => {
     // console.log(item);
     openUserModel(item.id, idx);
   }
+
+  const userModelRef = React.useRef<UserModelMyChildRef>(null);
   const reGetList = async () => {
     TableUsersRef.current?.goSearch();
   }
@@ -211,7 +193,10 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
           onClose={()=>{setbatchAddModelStatus(false)}}
           aria-describedby="alert-dialog-slide-description"
         >
-          <DialogTitle>{"重複資料處理"}</DialogTitle>
+          <DialogTitle sx={{pb:'0.5rem'}}>
+            {"重複資料處理"}
+            <Typography variant="body2" gutterBottom>完成操作後請點「送出」再次進行資料新增</Typography>
+          </DialogTitle>
           <DialogContent>
             <FormHelperText error={true}>此區球員名稱重複，請修改or刪除後再次送出資料</FormHelperText>
             <TextareaAutosize
@@ -245,7 +230,7 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
           </DialogContent>
           <DialogActions>
             <Button onClick={()=>{setbatchAddModelStatus(false)}} size="small" color="secondary">取消</Button>
-            <Button onClick={sendNames} size="medium" color="primary">送出</Button>
+            <Button onClick={()=>{sendNames()}} size="medium" color="primary">送出</Button>
           </DialogActions>
         </Dialog>
       </React.Fragment>

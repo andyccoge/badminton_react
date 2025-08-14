@@ -88,6 +88,7 @@ function TableUsers(
 ) {
   React.useImperativeHandle(ref, () => ({
     showRows: (items:Array<Data>) => {
+      console.log(items);
       items = items.map((row) => {
         /*處理資料*/
         return row;
@@ -116,7 +117,7 @@ function TableUsers(
     updateBodyBlock(false);
   };
   const handleChangeRowsPerPage = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(+event.target.value);
+    await setRowsPerPage(+event.target.value);
     let tempSerchform:any = SearchFormModelRef.current?.getFormData();
     tempSerchform['per_p_num'] = +event.target.value;
     console.log(tempSerchform);
@@ -154,17 +155,12 @@ function TableUsers(
   const SearchFormModelRef = React.useRef<SearchFormModelMyChildRef>(null);
   const goSearch = async () =>{
     updateBodyBlock(true);
-    setRows([]);
-    setPage(0);
-    await new Promise((resolve) => { setTimeout(() => {resolve(null);}, 100); })
+    await setRows([]);
+    await setPage(0);
+    // await new Promise((resolve) => { setTimeout(() => {resolve(null);}, 100); })
     let tempSerchform:any = SearchFormModelRef.current?.getFormData();
     tempSerchform['p'] = 0;
     await getData(tempSerchform);
-    updateBodyBlock(false);
-  }
-  const cleanSearch = async () =>{
-    updateBodyBlock(true);
-    await getData(where);
     updateBodyBlock(false);
   }
 
@@ -175,7 +171,7 @@ function TableUsers(
         搜尋設定<SearchIcon />
       </Button>
       <Button size="small" sx={{alignSelf:'center'}} variant="text" color="info" 
-              onClick={cleanSearch}>
+              onClick={()=>{SearchFormModelRef.current?.cleanSearch()}}>
         清除篩選
       </Button>
       <SearchFormModel goSearch={goSearch}

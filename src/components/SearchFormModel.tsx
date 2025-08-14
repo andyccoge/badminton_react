@@ -33,7 +33,8 @@ interface columnType {
 
 export type MyChildRef = { // 子暴露方法給父
   setFormModel: (status:boolean) => void;
-  getFormData: () => void;
+  getFormData: () => any;
+  cleanSearch: () => void;
 };
 type MyChildProps = { // 父傳方法給子
   goSearch:() => void;
@@ -54,7 +55,13 @@ const SearchFormModel = React.forwardRef<MyChildRef, MyChildProps>((
 
   React.useImperativeHandle(ref, () => ({
     setFormModel: (status:boolean) => { setOpen(status); },
-    getFormData: () => { return form; },
+    getFormData: () => {
+      let where = JSON.parse(JSON.stringify(form));
+      if('ids' in where){ where['ids'] = JSON.stringify(where['ids']) }
+      if('user_ids' in where){ where['user_ids'] = JSON.stringify(where['user_ids']) }
+      return where;
+    },
+    cleanSearch: () => { handleCleanSearch(); },
   }));
 
 
@@ -70,10 +77,10 @@ const SearchFormModel = React.forwardRef<MyChildRef, MyChildProps>((
     if (event.key === 'Enter'){ handleGoSearch(); }
   };
 
-  const handleCleanSearch = () => {
+  const handleCleanSearch = async() => {
     setOpen(false);
-    goSearch();
-    setForm(formData);
+    await setForm(formData);
+    await goSearch();
   };
   const handleGoSearch = async() =>{
     await goSearch();
