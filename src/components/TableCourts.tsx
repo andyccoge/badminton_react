@@ -16,8 +16,17 @@ import SearchFormModel, {
   MyChildRef as SearchFormModelMyChildRef
 } from '../components/SearchFormModel';
 
-export const empty_searchForm = {
+interface SearchForm {
+  ids: any[];
+  play_date_id: string | null;
+  code: string | null;
+  type: string | null;
+  p: number;
+  per_p_num: number;
+}
+export const empty_searchForm:SearchForm = {
   ids:[],
+  play_date_id:'',
   code:'',
   type:'',
   p: 0,
@@ -225,7 +234,7 @@ function TableCourts(
                       return (
                         <TableCell key={column.id} align={column.align}>
                           {index==0 && <>
-                            <Button color="info" onClick={()=>{clickFirstCell(idx, row)}} sx={{p:0}}>
+                            <Button color="info" onClick={()=>{clickFirstCell(idx, row)}} sx={{p:0, display:'align', justifyContent:'start'}}>
                               {column.format && typeof value === 'number'
                               ? column.format(value)
                               : value}

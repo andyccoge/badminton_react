@@ -111,3 +111,16 @@ export function getTextareaUserNames(text:string): string[]{
 
   return names;
 }
+
+export function formatSeconds(totalSeconds) {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  let result = '';
+  if (hours > 0) result += String(hours).padStart(2, '0') + ':';
+  result += String(minutes).padStart(2, '0') + ':';
+  result += String(seconds).padStart(2, '0') + '';
+
+  return result;
+}

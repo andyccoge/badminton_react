@@ -12,63 +12,46 @@ import Checkbox from '@mui/material/Checkbox';
 import SearchIcon from '@mui/icons-material/Search';
 import {Button} from '@mui/material';
 
+import * as functions from '../functions.tsx'
+
 import SearchFormModel, {
   MyChildRef as SearchFormModelMyChildRef
 } from '../components/SearchFormModel';
 
 interface SearchForm {
   ids: any[];
-  email: string | null;
-  cellphone: string | null;
-  gender: string | null;
+  play_date_id: string | null;
   name_keyword: string | null;
-  level_over: string | null;
   p: number;
   per_p_num: number;
 }
 export const empty_searchForm:SearchForm = {
   ids:[],
-  email: '',
-  cellphone: '',
-  gender: '',
-  name_keyword: '',
-  level_over: '',
+  play_date_id:'',
+  name_keyword:'',
   p: 0,
   per_p_num: 0,
 };
 
 interface Column {
-  id: 'name' | 'name_nick' | 'name_line' | 'gender' | 'level' | 'cellphone' | 'email';
+  id: 'user_id_1' | 'user_id_2' | 'point_12' | 'point_34' | 'user_id_3' | 'user_id_4' | 'duration';
   label: string;
   minWidth?: number;
   align?: 'right';
   format?: (value: number) => string;
 }
 
-const columns: Column[] = [
-  { id: 'name', label: '姓名', minWidth: 100 },
-  { id: 'name_nick', label: '綽號', minWidth: 100 },
-  { id: 'name_line', label: 'LINE名稱', minWidth: 100 },
-  { 
-    id: 'gender', 
-    label: '性別', 
-    minWidth: 62,
-    format: (value: number) => ['', '男', '女'][value]
-  },
-  { id: 'level', label: '等級', minWidth: 62 },
-  { id: 'cellphone', label: '手機', minWidth: 100 },
-  { id: 'email', label: '信箱', minWidth: 150 },
-];
-
 interface Data {
   id:number,
-  name:string,
-  name_line:string,
-  name_nick:string,
-  email:string,
-  cellphone:string,
-  gender:number,
-  level:number,
+  user_id_1:number,
+  user_id_2:number,
+  user_id_3:number,
+  user_id_4:number,
+  play_date_id:number,
+  court_id:number,
+  point_12:number,
+  point_34:number,
+  duration:number,
 }
 
 
@@ -77,6 +60,7 @@ export type MyChildRef = { // 子暴露方法給父
   getSelectedIds: () => readonly number[];
   resetSelect: () => void;
   goSearch: () => void;
+  setUserMap:(map:any) => void;
 };
 type MyChildProps = { // 父傳方法給
   updateBodyBlock: (status) => void;
@@ -88,11 +72,12 @@ type MyChildProps = { // 父傳方法給
   needSearch?: boolean,
   needCheckBox?: boolean,
   needTool?: boolean,
+  userMap?: any,
 };
-function TableUsers(
+function TableMatchs(
   { 
     updateBodyBlock, getData, clickFirstCell, where={}, countTotal=0, 
-    numPerPage=10, needSearch=true, needCheckBox=false, needTool=false,
+    numPerPage=10, needSearch=true, needCheckBox=false, needTool=false, userMap={}
   }: MyChildProps,
   ref: React.Ref<MyChildRef>
 ) {
@@ -112,7 +97,30 @@ function TableUsers(
       setSelected([]);
     },
     goSearch: async() => { await goSearch(); },
+    setUserMap:(map) => { setUserIdMap(map); },
   }));
+
+  const [userIdMap, setUserIdMap] = React.useState<any>(userMap)
+  const columns: Column[] = [
+    { id: 'user_id_1', label: '球員1', minWidth: 100, 
+      format: (value: number) => userIdMap[value].name 
+    },
+    { id: 'user_id_2', label: '球員2', minWidth: 100, 
+      format: (value: number) => userIdMap[value].name 
+    },
+    { id: 'point_12', label: '比數1', minWidth: 100 },
+    { id: 'point_34', label: '比數2', minWidth: 100 },
+    { id: 'user_id_3', label: '球員3', minWidth: 100, 
+      format: (value: number) => userIdMap[value].name 
+    },
+    { id: 'user_id_4', label: '球員4', minWidth: 100, 
+      format: (value: number) => userIdMap[value].name 
+    },
+    { id: 'duration', label: '比賽用時', minWidth: 100,
+      format: (value: number) => functions.formatSeconds(value),
+      align: 'right',
+    },
+  ];
 
   const [rows, setRows] = React.useState<Array<any>>([]);
   const [page, setPage] = React.useState(0);
@@ -187,13 +195,7 @@ function TableUsers(
       <SearchFormModel goSearch={goSearch}
         formData={JSON.parse(JSON.stringify(where))}
         formColumns={[
-          {label:'姓名/綽號/LINE名稱', name:'name_keyword', type:'text', options:[],},
-          {label:'等級(以上)', name:'level_over', type:'number', options:[], size:{xs:6}},
-          {label:'手機', name:'cellphone', type:'text', options:[],},
-          {label:'信箱', name:'email', type:'email', options:[],},
-          {label:'性別', name:'gender', type:'select', options:[
-            {text:'男', value:1},{text:'女', value:2},
-          ], size:{xs:6}},
+          {label:'姓名/綽號/LINE名稱', name:'name_keyword', type:'text', options:[], size:{xs:12}},
         ]}
         ref={SearchFormModelRef} />
     </>}
@@ -201,12 +203,13 @@ function TableUsers(
       <TableContainer sx={{ maxHeight: 440 }}>
         <Table stickyHeader aria-label="sticky table">
           <TableHead>
-            {/* 
-              <TableRow>
-                <TableCell align="center" colSpan={2}>跨欄1,2</TableCell>
-                <TableCell align="center" colSpan={3}>跨欄3,4,5</TableCell>
-              </TableRow> 
-            */}
+            <TableRow>
+              <TableCell align="center" colSpan={1}></TableCell>
+              <TableCell align="center" colSpan={2}>隊伍1</TableCell>
+              <TableCell align="center" colSpan={2}>比數</TableCell>
+              <TableCell align="center" colSpan={2}>隊伍2</TableCell>
+              <TableCell align="center" colSpan={1}></TableCell>
+            </TableRow>
             <TableRow>
               {needCheckBox &&
                 <TableCell padding="checkbox">
@@ -289,4 +292,4 @@ function TableUsers(
     </Paper>
   </>);
 }
-export default React.forwardRef<MyChildRef, MyChildProps>(TableUsers);
+export default React.forwardRef<MyChildRef, MyChildProps>(TableMatchs);

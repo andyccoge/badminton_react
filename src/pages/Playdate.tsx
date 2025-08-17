@@ -21,11 +21,14 @@ import TableUsers, {
   MyChildRef as TableUsersMyChildRef, empty_searchForm as emptyUserSearchForm
 } from '../components/TableUsers.tsx';
 import UserModel, {MyChildRef as UserModelMyChildRef} from '../components/UserModel';
-
 import TableCourts, {
   MyChildRef as TableCourtsMyChildRef, empty_searchForm as emptyCourtSearchForm
 } from '../components/TableCourts.tsx';
 import CourtModel, {MyChildRef as CourtModelMyChildRef} from '../components/CourtModel';
+import TableMatchs, {
+  MyChildRef as TableMatchsMyChildRef, empty_searchForm as emptyMatchSearchForm
+} from '../components/TableMatchs.tsx';
+import MatchModel, {MyChildRef as MatchModelMyChildRef} from '../components/MatchModel';
 
 import {Dialog,DialogActions,DialogContent,DialogContentText,DialogTitle} from '@mui/material';
 import { FormHelperText } from '@mui/material';
@@ -35,6 +38,8 @@ const defaulUsertWhere = emptyUserSearchForm;
 defaulUsertWhere['per_p_num'] = numPerPage;
 const defaulCourtWhere = emptyCourtSearchForm;
 defaulCourtWhere['per_p_num'] = numPerPage;
+const defaulMatchWhere = emptyMatchSearchForm;
+defaulMatchWhere['per_p_num'] = numPerPage;
 
 function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   const { enqueueSnackbar } = useSnackbar();
@@ -43,8 +48,10 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   // 預設篩選條件(限本打球日)
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const play_date_id = searchParams.get('id');
+  const play_date_id:string | null = searchParams.get('id');
   defaulUsertWhere['play_date_id'] = play_date_id;
+  defaulCourtWhere['play_date_id'] = play_date_id;
+  defaulMatchWhere['play_date_id'] = play_date_id;
 
   const [initFinished, setInitFinished] = React.useState(false);
   const [courtType, setCourtType] = React.useState<any[]>([]);
@@ -67,12 +74,11 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
         }
         setCourtType(result.court_type);
         setCourts(result.courts);
+        setUserMap(result.user_map);
         setMatchs(result.matchs);
         setCards([result.play_date]);
         setReservations(result.reservations);
-        setUserMap(result.user_map);
         TableUsersRef.current?.showRows(result.reservations);
-        TableCourtsRef.current?.showRows(result.courts);
       } catch (error) {
         // console.error('Error fetching data:', error);
         showMessage('取得打球日完整設定資料發生錯誤', 'error');
@@ -88,27 +94,20 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   }
 
 
-  const [tabInit, setTabInit] = React.useState([false,false,false]);
   const [tabValue, setTabValue] = React.useState('tab1');
   const handleTabChange = (event: React.SyntheticEvent, newTabValue: string) => {
     setTabValue(newTabValue);
   };
   React.useEffect(() => {
-    if (tabValue === 'tab1' && TableUsersRef.current && !tabInit[0]) {
+    if (tabValue === 'tab1' && TableUsersRef.current) {
       TableUsersRef.current?.showRows(reservations);
-      tabInit[0] = true;
-      setTabInit(tabInit);
     }
-    else if(tabValue === 'tab2' && TableCourtsRef.current && !tabInit[1]){
+    else if(tabValue === 'tab2' && TableCourtsRef.current){
       TableCourtsRef.current?.showRows(courts);
-      tabInit[1] = true;
-      setTabInit(tabInit);
     }
-    // else if(tabValue === 'tab3' && TableMatchsRef.current && !tabInit[2]){
-    //   TableMatchsRef.current?.showRows(matchs);
-    //   tabInit[2] = true;
-    //   setTabInit(tabInit);
-    // }
+    else if(tabValue === 'tab3' && TableMatchsRef.current){
+      TableMatchsRef.current?.showRows(matchs);
+    }
   }, [tabValue]);
 
   const [batchUserText, setBatchUserText] = React.useState("");
@@ -160,6 +159,7 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
 
   const TableUsersRef = React.useRef<TableUsersMyChildRef>(null);
   const getReservation = async(where:any={}) => {
+    TableUsersRef.current?.showRows([]);
     try {
       let result = await functions.fetchData('GET', 'reservations', null, where);
       setReservations(result.data);
@@ -219,9 +219,10 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
 
   const TableCourtsRef = React.useRef<TableCourtsMyChildRef>(null);
   const getCourts = async(where:any={}) => {
+    TableCourtsRef.current?.showRows([]);
     try {
       let result = await functions.fetchData('GET', 'courts', null, where);
-      setReservations(result.data);
+      setCourts(result.data);
       TableCourtsRef.current?.resetSelect();
       TableCourtsRef.current?.showRows(result.data);
     } catch (error) {
@@ -283,6 +284,70 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
     courts[idx] = item;
     setReservations(courts);
     TableCourtsRef.current?.showRows(courts);
+  }
+
+  const TableMatchsRef = React.useRef<TableMatchsMyChildRef>(null);
+  const getMatchs = async(where:any={}) => {
+    TableMatchsRef.current?.showRows([]);
+    try {
+      let result = await functions.fetchData('GET', 'matchs', null, where);
+      setUserMap(result.user_map);
+      setMatchs(result.data);
+      TableMatchsRef.current?.resetSelect();
+      TableMatchsRef.current?.setUserMap(result.user_map);
+      TableMatchsRef.current?.showRows(result.data);
+    } catch (error) {
+      // console.error('Error fetching data:', error);
+      showMessage('取得比賽紀錄資料發生錯誤', 'error');
+    }
+  }
+  const deleteSelectedMatchIds = async ()=>{
+    let selectedIds = TableMatchsRef.current?.getSelectedIds();
+    console.log(selectedIds);
+    if(selectedIds?.length==0){
+      showMessage('請勾選刪除項目', 'error');return;
+    }
+    const do_function = async():Promise<boolean> => {
+      updateBodyBlock(true);
+      let modelStatus = true;
+      try {
+        let result = await functions.fetchData('DELETE', 'matchs', null, {ids:selectedIds});
+        if(result.msg){
+          showMessage(result.msg, 'error');
+        }else{
+          modelStatus = false;
+          TableMatchsRef.current?.goSearch();
+        }
+      } catch (error) {
+        // console.error('Error fetching data:', error);
+        showMessage('刪除比賽紀錄發生錯誤', 'error');
+      }
+      updateBodyBlock(false);
+      return modelStatus;
+    }
+    showConfirmModelStatus(
+      `確認刪除？`,
+      `即將刪除勾選的【`+ selectedIds?.length + `】個比賽紀錄，確認執行嗎？`,
+      '確認',
+      do_function
+    );
+  }
+  const clickTableMatchs = (idx:number, item:any) => {
+    // console.log(item);
+    if(idx<0 && idx>=matchs.length){ return; }
+    MatchModelRef.current?.setUserMap(user_map);
+    MatchModelRef.current?.setModel(idx, item); // 呼叫 child 的方法
+  }
+
+  const MatchModelRef = React.useRef<MatchModelMyChildRef>(null);
+  const reGetListMatchs = async () => {
+    TableMatchsRef.current?.goSearch();
+  }
+  const renewListMatchs = async (idx, item)=>{
+    item['duration'] = Number(item['duration']);
+    matchs[idx] = item;
+    setMatchs(matchs);
+    TableMatchsRef.current?.showRows(matchs);
   }
 
   return (   
@@ -370,7 +435,7 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
           </Box>
         </TabPanel>
         <TabPanel value="tab2">
-          <Typography variant='h6' textAlign="left">
+          <Typography variant='h6' textAlign="left" gutterBottom>
             <Box sx={{marginRight: '1rem', display:'inline-block'}}>場地記錄</Box>
             <Fab size="small" color="secondary" aria-label="add"
                 onClick={()=>{CourtModelRef.current?.setModel(-1, {play_date_id:play_date_id})}}
@@ -391,7 +456,20 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
           </Box>
         </TabPanel>
         <TabPanel value="tab3">
-          <Typography variant='h6' textAlign="left">比賽記錄</Typography>
+          <Typography variant='h6' textAlign="left" gutterBottom>比賽記錄</Typography>
+          <TableMatchs updateBodyBlock={updateBodyBlock}
+                            getData={getMatchs}
+                            clickFirstCell={clickTableMatchs}
+                            where={defaulMatchWhere}
+                            numPerPage={0}
+                            needCheckBox={true}
+                            userMap={user_map}
+                            ref={TableMatchsRef}/>
+          <Box textAlign="left" sx={{mt:'1rem'}}>
+            <Button size="small" variant="contained" color='error' onClick={deleteSelectedMatchIds}>
+              <DeleteForeverIcon />
+            </Button>
+          </Box>
         </TabPanel>
       </TabContext>
 
@@ -405,7 +483,11 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
                   reGetList={reGetListCourts}
                   renewList={renewListCourts}
                   ref={CourtModelRef} />
-                  
+      <MatchModel updateBodyBlock={updateBodyBlock}
+                  reGetList={reGetListMatchs}
+                  renewList={renewListMatchs}
+                  userMap={user_map}
+                  ref={MatchModelRef} />
       <React.Fragment>
         <Dialog
           open={batchAddModelStatus}
