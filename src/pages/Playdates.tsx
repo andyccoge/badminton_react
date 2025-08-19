@@ -153,11 +153,14 @@ function Playdates({updateBodyBlock, showConfirmModelStatus}) {
   const viewPlayDate = (id, index) =>{
     let view_url = '/playdate?id='+id;
     // console.log(view_url)
-    window.open(view_url);
+    // window.open(view_url); /*開新頁面*/
+    location.href = view_url; /*頁面導向*/
   }
   const doPlayDate = (id) =>{
     let view_url = '/play?id='+id;
-    console.log(view_url);
+    // console.log(view_url);
+    window.open(view_url); /*開新頁面*/
+    // location.href = view_url; /*頁面導向*/
   }
   const deletePlayDate = async (id, index) =>{
     let tempData = cards[index];

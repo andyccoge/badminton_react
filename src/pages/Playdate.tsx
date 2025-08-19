@@ -48,13 +48,12 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   // 預設篩選條件(限本打球日)
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const play_date_id:string | null = searchParams.get('id');
+  const play_date_id:string | null = searchParams.get('id') || '0';
   defaulUsertWhere['play_date_id'] = play_date_id;
   defaulCourtWhere['play_date_id'] = play_date_id;
   defaulMatchWhere['play_date_id'] = play_date_id;
 
   const [initFinished, setInitFinished] = React.useState(false);
-  const [courtType, setCourtType] = React.useState<any[]>([]);
   const [courts, setCourts] = React.useState<any[]>([]);
   const [matchs, setMatchs] = React.useState<any[]>([]);
   const [cards, setCards] = React.useState<any[]>([]);
@@ -67,12 +66,12 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
       setInitFinished(false);
       try {
         let result = await functions.fetchData('GET', 'play_date_data', null, {id:play_date_id});
-        console.log(result);
-        if(!result.play_date){ 
+        // console.log(result);
+        if(!result.play_date){
+          showMessage('無此打球日，頁面即將跳轉', 'error');
           navigate('/', { replace: true });
-          return {};
+          return;
         }
-        setCourtType(result.court_type);
         setCourts(result.courts);
         setUserMap(result.user_map);
         setMatchs(result.matchs);
@@ -90,7 +89,9 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
 
   const doPlayDate = (id) =>{
     let view_url = '/play?id='+id;
-    console.log(view_url);
+    // console.log(view_url);
+    window.open(view_url); /*開新頁面*/
+    // location.href = view_url; /*頁面導向*/
   }
 
 

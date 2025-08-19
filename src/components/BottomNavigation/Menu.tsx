@@ -15,7 +15,7 @@ export default function BottomMenu({ onUserClick }: BottomMenuProps) {
   const [value, setValue] = React.useState(0);
 
   return (
-    <Box sx={{ minWidth: 320 }}>
+    <Box sx={{ minWidth: 300 }}>
       <BottomNavigation
         showLabels
         value={value}

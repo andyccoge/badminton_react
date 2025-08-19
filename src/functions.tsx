@@ -124,3 +124,9 @@ export function formatSeconds(totalSeconds) {
 
   return result;
 }
+
+export const middleEllipsis = (str, frontLen = 7, backLen = 0) => {
+  if(!str){return ''}
+  if (str.length <= frontLen + backLen) return str;
+  return str.slice(0, frontLen) + "..." + (backLen?str.slice(-backLen):'');
+};

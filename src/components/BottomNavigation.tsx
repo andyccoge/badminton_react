@@ -1,21 +1,47 @@
 import * as React from 'react';
 
-import BottomMenu from './BottomNavigation/Menu';
-import BottomDrawer from './BottomNavigation/UserPanel';
+import Menu from './BottomNavigation/Menu';
+import UserPanel from './BottomNavigation/UserPanel';
+import {userType} from '../components/UserNameCard';
 
-export default function App() {
+export type MyChildRef = { // 子暴露方法給父
+  setUserPanelDrawerOpen:(status:any) => void;
+};
+type MyChildProps = { // 父傳方法給子
+  updateBodyBlock: () => void;
+  users?:userType[]
+  cleanSeletedCourtName?: () => void;
+  doSelectUser?: (userIdx:number) => void;
+};
+const BottomNavigation = React.forwardRef<MyChildRef, MyChildProps>((
+  { 
+    updateBodyBlock, users=[], doSelectUser,
+    cleanSeletedCourtName,
+  }, ref
+) => {
+  React.useImperativeHandle(ref, () => ({
+    setUserPanelDrawerOpen:(status:any) => {setUserPanelDrawerOpen(status)},
+  }));
+
   const [drawerOpen, setUserPanelDrawerOpen] = React.useState(false);
 
   return (
     <>
       {/* 下方選單，點擊 User 時打開 Drawer */}
-      <BottomMenu onUserClick={() => setUserPanelDrawerOpen(true)} />
+      <Menu onUserClick={() => setUserPanelDrawerOpen(true)} />
 
       {/* 從底部彈出的 Drawer */}
-      <BottomDrawer
+      <UserPanel
+        updateBodyBlock={updateBodyBlock}
         open={drawerOpen}
-        onClose={() => setUserPanelDrawerOpen(false)}
+        onClose={() => {
+          setUserPanelDrawerOpen(false);
+          if(cleanSeletedCourtName){cleanSeletedCourtName()};
+        }}
+        users={users}
+        doSelectUser={doSelectUser}
       />
     </>
   );
-}
+})
+export default BottomNavigation;

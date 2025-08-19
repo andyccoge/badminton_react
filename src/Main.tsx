@@ -65,7 +65,10 @@ function Main() {
         <Box className="pl-2 pr-2 pb-3">
           <BrowserRouter>
             <Routes>
+              {/* 預設首頁跳轉至「打球日管理」 */}
               <Route path="/" element={<Playdates updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}/>} />
+
+              <Route path="/playdates" element={<Playdates updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}/>} />
               <Route path="/users" element={<Users updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}/>} />
               <Route path="/playdate" element={<Playdate updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}/>} />
               <Route path="/play" element={<Play updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}/>} />

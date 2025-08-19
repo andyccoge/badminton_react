@@ -17,9 +17,9 @@ import { Link } from 'react-router-dom'
 const LogoIcon = '/logo.png?20250808-1'
 
 const pages = [
-  ['/','打球日管理'], 
+  ['/playdates','打球日管理'], 
   ['/users', '球員管理'],
-  ['/playdate', '打球日詳細內容'],
+  // ['/playdate', '打球日詳細內容'],
   ['/play', '安排比賽'],
 ];
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
