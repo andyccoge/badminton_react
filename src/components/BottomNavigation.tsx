@@ -2,21 +2,25 @@ import * as React from 'react';
 
 import Menu from './BottomNavigation/Menu';
 import UserPanel from './BottomNavigation/UserPanel';
-import {userType} from '../components/UserNameCard';
+import {UserType} from '../components/UserNameCard';
 
 export type MyChildRef = { // 子暴露方法給父
   setUserPanelDrawerOpen:(status:any) => void;
 };
 type MyChildProps = { // 父傳方法給子
   updateBodyBlock: () => void;
-  users?:userType[]
+  users?:UserType[];
   cleanSeletedCourtName?: () => void;
   doSelectUser?: (userIdx:number) => void;
+  setUserShowUp?: (idx:number) => void;
+  setUserLeave?: (idx:number) => void;
+  userIdxMatch?:number[],
 };
 const BottomNavigation = React.forwardRef<MyChildRef, MyChildProps>((
   { 
-    updateBodyBlock, users=[], doSelectUser,
-    cleanSeletedCourtName,
+    updateBodyBlock, users=[], cleanSeletedCourtName,
+    doSelectUser, setUserShowUp, setUserLeave, userIdxMatch=[],
+    
   }, ref
 ) => {
   React.useImperativeHandle(ref, () => ({
@@ -40,6 +44,9 @@ const BottomNavigation = React.forwardRef<MyChildRef, MyChildProps>((
         }}
         users={users}
         doSelectUser={doSelectUser}
+        setUserShowUp={setUserShowUp}
+        setUserLeave={setUserLeave}
+        userIdxMatch={userIdxMatch}
       />
     </>
   );

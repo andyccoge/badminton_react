@@ -24,13 +24,13 @@ export default function BottomMenu({ onUserClick }: BottomMenuProps) {
         }}
       >
         <BottomNavigationAction
-          label="球員管理"
+          label="球員"
           icon={<GroupAddIcon />}
           onClick={onUserClick} // 呼叫父層傳來的函數
         />
-        <BottomNavigationAction label="添加場地" icon={<LibraryAddIcon />} />
-        <BottomNavigationAction label="比賽紀錄" icon={<ScoreboardIcon />} />
-        <BottomNavigationAction label="參數設定" icon={<SettingsIcon />} />
+        <BottomNavigationAction label="場地" icon={<LibraryAddIcon />} />
+        <BottomNavigationAction label="比數" icon={<ScoreboardIcon />} />
+        <BottomNavigationAction label="參數" icon={<SettingsIcon />} />
       </BottomNavigation>
     </Box>
   );

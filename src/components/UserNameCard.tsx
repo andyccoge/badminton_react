@@ -6,6 +6,10 @@ import { styled } from '@mui/material/styles';
 import { Box, Grid, Stack, Typography, Button} from '@mui/material';
 import {Card, CardActionArea, CardContent, CardMedia, CardActions} from '@mui/material';
 import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip';
+import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import EditSquareIcon from '@mui/icons-material/EditSquare';
+import DirectionsWalkIcon from '@mui/icons-material/DirectionsWalk';
 
 const HtmlTooltip = styled(({ className, ...props }: TooltipProps) => (
   <Tooltip {...props} classes={{ popper: className }} />
@@ -22,13 +26,15 @@ const HtmlTooltip = styled(({ className, ...props }: TooltipProps) => (
 }));
 
 
-export interface userType {
+export interface UserType {
   id: string,
-  idx: number,
   name: string,
   name_nick: string,
+  name_line: string,
   level: number,
   gender: number,
+  show_up: number,
+  wait: number,
   courtNum: number,
   groupNumber: number,
 }
@@ -41,14 +47,18 @@ export type MyChildRef = { // 子暴露方法給父
 type MyChildProps = { // 父傳方法給
   updateBodyBlock: (status) => void;
   user_idx: number,
-  user?: userType | null,
+  user?: UserType | null,
   vertical?: boolean,
   onClick: () => void;
+  setUserShowUp?: (idx:number) => void;
+  setUserLeave?: (idx:number) => void;
+  userIdxMatch?:number[],
 };
 
 function UserNameCard(
   { 
-    updateBodyBlock, user_idx, user, vertical=true, onClick,
+    updateBodyBlock, user_idx, user, vertical=true, onClick, 
+    setUserShowUp, setUserLeave, userIdxMatch=[]
   }: MyChildProps,
   ref: React.Ref<MyChildRef>
 ) {
@@ -72,41 +82,68 @@ function UserNameCard(
         minHeight: '2.4rem',
         maxheight: vertical ? '4.5rem' : '5rem', 
         display:'flex', alignItems:'center', justifyContent:'center',
-        border: selectedStatus ? '3px solid #ff0000' : '1px solid #000',
-        boxShadow: selectedStatus ? '0px 0px 10px 5px #ff0000' : null,
-        bgcolor: user?.gender==2 ? '#ff7788' : '#00aaff',
+        border: '1px solid #000',
+        boxShadow: selectedStatus ? '0px 0px 3px 5px #ff0000' : null,
+        bgcolor: '',
+        opacity: user?.show_up==0 ? 0.5 : 1,
       }}
-      onClick={()=>{onClick()}}
     >
-      <CardContent style={{padding:0, width:'100%'}}>
-        <HtmlTooltip
-          title={
-            <React.Fragment>
-              <em>綽號：</em>{user?.name_nick}<br/>
-              <em>等級：</em>{user?.level}
-            </React.Fragment>
-          }
-          arrow
-          slotProps={{
-            popper: {
-              modifiers: [
-                { name: 'offset', options: { offset: [0, -14], }, },
-              ],
-            },
-          }}
-        >
-          <Box sx={{maxHeight: vertical ? '4.5rem' : '5rem',}}>
-            <Typography variant='body1' sx={{wordBreak: 'break-all',}} display={'inline-block'}>
-              {functions.middleEllipsis(user?.name)}
-              {/* {functions.middleEllipsis('JerryPan Wuuu', 12)} */}
-              {/* {functions.middleEllipsis('陳彥彥彥彥彥彥彥安', 5)} */}
-            </Typography>
-            <Typography variant='body1' sx={{wordBreak: 'break-all',}} display={'inline-block'}>
-              (場:{user?.courtNum || 0})
-            </Typography>
-          </Box>
-        </HtmlTooltip>
-      </CardContent>
+      <HtmlTooltip
+        title={
+          <React.Fragment>
+            {user?.name_nick}{/* 綽號 */}
+            /
+            {user?.name_line}{/* LINE名稱 */}
+            {/* {user?.gender ? (user?.gender==1?'♂️':'♀️') : '❔'} */}
+            <br/>
+            <em>⭐:</em>{user?.level || 0}&nbsp;&nbsp;{/* 等級 */}
+            <em>🎌:</em>{user?.courtNum || 0}&nbsp;&nbsp;{/* 比賽場數 */}
+            <em>💤:</em>{user?.wait || 0}{/* 等待 */}
+            {user?.id && <Grid container spacing={2}> 
+              <Grid size={3} textAlign={'center'}>
+                <EmojiPeopleIcon className='cursor-pointer' fontSize={'small'}
+                  onClick={()=>{if(setUserShowUp){setUserShowUp(user_idx)}}}/>
+              </Grid>
+              <Grid size={3} textAlign={'center'}>
+                <VisibilityIcon className='cursor-pointer' fontSize={'small'}
+                  onClick={()=>{alert('view'+user?.id+':'+user_idx)}}/>
+              </Grid>
+              <Grid size={3} textAlign={'center'}>
+                <EditSquareIcon className='cursor-pointer' fontSize={'small'} 
+                  onClick={()=>{alert('edit'+user?.id+':'+user_idx)}}/>
+              </Grid>
+              <Grid size={3} textAlign={'center'}>
+                <DirectionsWalkIcon className='cursor-pointer' fontSize={'small'}
+                  onClick={()=>{if(setUserLeave){setUserLeave(user_idx)}}}/>
+              </Grid>
+            </Grid>}
+          </React.Fragment>
+        }
+        arrow
+        slotProps={{
+          popper: {
+            modifiers: [
+              { name: 'offset', options: { offset: [0, -14], }, },
+            ],
+          },
+        }}
+      >
+        <CardContent style={{padding:0}} className='cursor-pointer' onClick={()=>{onClick()}}
+                     sx={{
+                      maxHeight: vertical ? '4.5rem' : '5rem',
+                      opacity: userIdxMatch.indexOf(user_idx)==-1 ? '1' : '0.25'
+                    }}>
+          <Typography variant='body2' sx={{wordBreak: 'break-all',}} display={'inline-block'}>
+            {functions.middleEllipsis(user?.name, 5) || '(空)'}
+            {user?.gender ? (user?.gender==1?'♂️':'♀️') : '❔'}
+          </Typography>
+          <Typography variant='caption' sx={{wordBreak: 'break-all',}} display={'inline-flex'} lineHeight={1}>
+            <em className='inline-block'>⭐<em className='inline-block'>{user?.level || 0}</em></em>
+            <em className='inline-block'>🎌<em className='inline-block'>{user?.courtNum || 0}</em></em>
+            <em className='inline-block'>💤<em className='inline-block'>{user?.wait || 0}</em></em>
+          </Typography>
+        </CardContent>
+      </HtmlTooltip>
     </Card>
   </>)
 }
