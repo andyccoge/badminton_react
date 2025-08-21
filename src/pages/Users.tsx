@@ -107,15 +107,15 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
   const [repeatName, setRepeatName] = React.useState<string>();
   const [repeatLine, setRepeatLine] = React.useState<string>();
   const [OkNames, setOkNames] = React.useState<string>();
-  async function batchAdd(tempStr:string='',  batchUserForceAdd:string='') {
+  async function batchAdd(tempStr,  batchUserForceAdd:string='') {
     if(!batchUserText.trim()){
       showMessage('請設定名單，以「換行」分隔球員', 'error');
       return;
     }
     updateBodyBlock(true); //顯示遮蓋
     // await new Promise((resolve) => { setTimeout(() => {resolve(null);}, 100); })
-    let names = functions.getTextareaUserNames(tempStr ? tempStr : batchUserText);
-    console.log(names);
+    let names = functions.getTextareaUserNames(tempStr);
+    // console.log(names);
 
     try {
       let result = await functions.fetchData('POST', 'user_batch', {names:names, force:batchUserForceAdd});
@@ -183,7 +183,7 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
             />
         </Grid>
         <Grid size={{xs:12, sm:1}}>
-          <Button onClick={()=>{batchAdd()}}>送出</Button>
+          <Button onClick={()=>{batchAdd(batchUserText)}}>送出</Button>
         </Grid>
       </Grid>
       <React.Fragment>

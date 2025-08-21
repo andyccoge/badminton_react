@@ -15,14 +15,13 @@ const vertical=true; /* true false */
 
 const initCourt = (court:any) => {
   court.duration = 0; /*持續時間*/
-  court.timer = null; /*比賽計時器*/
   /*場上人員index(對應主資料)*/
   const usersIdxList:number[] = [-1,-1,-1,-1];
   court.usersIdx = usersIdxList;
   return court;
 }
 const initCourtUser = (user:any) => {
-  user.wait = 0;
+  user.waitNum = 0;
   user.courtNum = 0;
   user.groupNumber = -1;
   return user;
@@ -42,8 +41,6 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
 
   const [initFinished, setInitFinished] = React.useState(false);
   const [courts, setCourts] = React.useState<any[]>([]);
-  const [courtsMatch, setCourtsMatch] = React.useState<any[]>([]);
-  const [courtsPrepare, setCourtsPrepare] = React.useState<any[]>([]);
   const [matchs, setMatchs] = React.useState<any[]>([]);
   const [cards, setCards] = React.useState<any[]>([]);
   const [reservations, setReservations] = React.useState<any[]>([]);
@@ -51,18 +48,13 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
   
   /*在比賽場中的球員idx(有紀錄表示在場上)*/
   const [userIdxMatch, setUserIdxMatch] = React.useState<number[]>([]);
-  
-  const [selectedCourtType, setSelectedCourtType] = React.useState<number>(0);
+
   const [selectedCourtIdx, setSelectedCourtIdx] = React.useState<number>(-1);
   const [selectedNameIdx, setSelectedNameIdx] = React.useState<number>(-1);
 
-  const setPlayCourtsMatch = (courts:any[]) => {
-    setCourtsMatch(courts.map((item)=>{ return initCourt(item); }));
+  const setPlayCourts = (courts:any[]) => {
+    setCourts(courts.map((item)=>{ return initCourt(item); }));
   }
-  const setPlayCourtsPrepare = (courts:any[]) => {
-    setCourtsPrepare(courts.map((item)=>{ return initCourt(item); }));
-  }
-
   const setPlayUsers = (users:any[]) => {
     users = users.map((item)=>{ return initCourtUser(item); })
     setReservations(users);
@@ -81,9 +73,7 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
           return;
         }
 
-        setCourts(result.courts);
-        setPlayCourtsMatch(result.courts_match);
-        setPlayCourtsPrepare(result.courts_prepare);
+        setPlayCourts(result.courts);
         setUserMap(result.user_map);
         setMatchs(result.matchs);
         setCards([result.play_date]);
@@ -98,45 +88,38 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
     })(); // Call the IIFE immediately
   }, []); // Empty dependency array ensures it runs only once on mount
 
-  const CourtMatchRefs = React.useRef<Array<React.RefObject<CourtMyChildRef | null>>>([]);
-  const CourtPrepareRefs = React.useRef<Array<React.RefObject<CourtMyChildRef | null>>>([]);
-  const handleCourtRefs = (type: number, index: number) => (el: CourtMyChildRef | null) => {
-    const tempRef = type==1 ? CourtMatchRefs : CourtPrepareRefs;
+  const CourtRefs = React.useRef<Array<React.RefObject<CourtMyChildRef | null>>>([]);
+  const handleCourtRefs = (index: number) => (el: CourtMyChildRef | null) => {
     if (el) {
-      tempRef.current[index] = { current: el };
+      CourtRefs.current[index] = { current: el };
     } else {
-      tempRef.current[index] = { current: null };
+      CourtRefs.current[index] = { current: null };
     }
   };
 
   const cleanSeletedCourtName = () => {
-    const tempCourtsRefs = selectedCourtType==1 ? CourtMatchRefs : CourtPrepareRefs;
-    const selectedCourt = tempCourtsRefs?.current[selectedCourtIdx];
+    const selectedCourt = CourtRefs?.current[selectedCourtIdx];
     if(!selectedCourt){ return; }
     const nameRefs = selectedCourt.current?.getUserNameCards();
     if(nameRefs){
       nameRefs[selectedNameIdx].current?.setSelectedStatus(false);
     }
-    setSelectedCourtType(0);
     setSelectedCourtIdx(-1);
     setSelectedNameIdx(-1);
   }
-  const clickCourtUserName = (type:number, courtIdx:number) => {
-    const tempRefs = type==1 ? CourtMatchRefs : CourtPrepareRefs;
+  const clickCourtUserName = (courtIdx:number) => {
     const clickUserName = (refIdx) => {
-      const tempRef = tempRefs?.current[courtIdx];
+      const tempRef = CourtRefs?.current[courtIdx];
       const NameRefs = tempRef?.current?.getUserNameCards();
       const NameRef = NameRefs?.[refIdx].current;
       const oriStatus = NameRef?.getSelectedStatus();
       cleanSeletedCourtName();
       if(oriStatus==false){
-        NameRef?.setSelectedStatus(true)
-        setSelectedCourtType(type);
+        NameRef?.setSelectedStatus(true);
         setSelectedCourtIdx(courtIdx);
         setSelectedNameIdx(refIdx);
         // 捲動到該場地
-        const tempCourtsRefs = type==1 ? CourtMatchRefs : CourtPrepareRefs;
-        tempCourtsRefs?.current[courtIdx].current?.scrollToSelf();
+        tempRef.current?.scrollToSelf();
         BottomNavigationRef?.current?.setUserPanelDrawerOpen(true);
       }
     }
@@ -145,22 +128,19 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
 
   const BottomNavigationRef = React.useRef<BottomNavigationMyChildRef>(null);
   const doSelectUser = async(userIdx:number) => {
-    let result = setCourtUser(selectedCourtType, selectedCourtIdx, selectedNameIdx, userIdx);
+    let result = setCourtUser(selectedCourtIdx, selectedNameIdx, userIdx);
     if(result){
-      const tempCourts = selectedCourtType==1 ? courtsMatch : courtsPrepare;
-      const usersIdx = tempCourts[selectedCourtIdx].usersIdx;
+      const usersIdx = courts[selectedCourtIdx].usersIdx;
       const nextIdx = usersIdx.indexOf(-1);
-      const tempCourtsRefs = selectedCourtType==1 ? CourtMatchRefs : CourtPrepareRefs;
-      const nameRefs = tempCourtsRefs?.current[selectedCourtIdx].current?.getUserNameCards();
+      const nameRefs = CourtRefs?.current[selectedCourtIdx].current?.getUserNameCards();
       if(nameRefs){
         nameRefs[selectedNameIdx].current?.setSelectedStatus(false);
         if(nextIdx!=-1){ /*場地還有空位代設定球員*/
             nameRefs[nextIdx].current?.setSelectedStatus(true);
             // 捲動到該場地
-            tempCourtsRefs?.current[selectedCourtIdx].current?.scrollToSelf();
+            CourtRefs?.current[selectedCourtIdx].current?.scrollToSelf();
             setSelectedNameIdx(nextIdx);
         }else{
-          await setSelectedCourtType(0);
           await setSelectedCourtIdx(-1);
           await setSelectedNameIdx(-1);
           BottomNavigationRef?.current?.setUserPanelDrawerOpen(false);
@@ -169,15 +149,14 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
     }
   }
 
-  const setCourtUser = (courtType:number, courtIdx:number, nameIdx:number, userIdx:number):boolean => {
-    if(courtType<0 || courtIdx<0 || nameIdx<0){ 
+  const setCourtUser = (courtIdx:number, nameIdx:number, userIdx:number):boolean => {
+    if(courtIdx<0 || nameIdx<0){ 
       showMessage('未設定上場位置', 'warning'); return false;
     }
-    const tempCourts = courtType==1 ? courtsMatch : courtsPrepare;
-    if(courtIdx>=tempCourts.length){
+    if(courtIdx>=courts.length){
       showMessage('設定場地有誤', 'warning'); return false;
     }
-    const usersIdx = tempCourts[courtIdx].usersIdx;
+    const usersIdx = courts[courtIdx].usersIdx;
     if(nameIdx>=usersIdx.length){
       showMessage('設定位置有誤', 'warning'); return false;
     }
@@ -190,7 +169,7 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
       if(userData.show_up==0){
         showMessage('此球員尚未到場', 'warning'); return false;
       }
-      if(courtType==1 && userIdxMatch.indexOf(userIdx)!=-1){
+      if(courts[courtIdx].type==1 && userIdxMatch.indexOf(userIdx)!=-1){
         showMessage('此球員已在比賽場上', 'warning'); return false;
       }
       if(usersIdx.indexOf(userIdx)!=-1){
@@ -199,15 +178,14 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
     }
     const oriUserIdx = usersIdx[nameIdx];
     usersIdx[nameIdx] = userIdx;
-    if(courtType==1){
-      setCourtsMatch(prev =>
-        prev.map((court,idx) =>
-          idx === courtIdx
-            ? { ...court, usersIdx: usersIdx,}
-            : court
-        )
-      );
-
+    setCourts(prev =>
+      prev.map((court,idx) =>
+        idx === courtIdx
+          ? { ...court, usersIdx: usersIdx,}
+          : court
+      )
+    );
+    if(courts[courtIdx].type==1){
       /*排除原本在場上的idx*/
       const tempUserIdxs = userIdxMatch.filter(item => item !== oriUserIdx);
       if(userIdx!=-1){
@@ -215,14 +193,6 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
         tempUserIdxs.push(userIdx);
       }
       setUserIdxMatch(tempUserIdxs);
-    }else{
-      setCourtsPrepare(prev =>
-        prev.map((court,idx) =>
-          idx === courtIdx
-            ? { ...court, usersIdx: usersIdx,}
-            : court
-        )
-      );
     }
     return true;
   }
@@ -244,33 +214,29 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
 
   return (   
     <>
-      {/* <Button onClick={()=>{
-        console.log(CourtMatchRefs);
-        console.log(CourtPrepareRefs);
-        console.log(selectedCourtType);
-        console.log(selectedCourtIdx);
-        console.log(selectedNameIdx);
-      }}>CourtRefs</Button> */}
-
       <Box sx={{pb:'0.5rem'}}></Box>
       {/* 比賽場 */}
       <Grid container spacing={1}>
         {!initFinished && [0,0].map((_, temp_idx) => (<TempCourt key={'tempcourt1-'+temp_idx}/>))}
-        {courtsMatch.map((court, court_idx) => (
-          <Grid size={{ xs: 6, sm: 4, md: 3, lg:2, xl:2 }} key={'court-'+court_idx}>
-            <Court updateBodyBlock={updateBodyBlock}
-                  court={court}
-                  court_idx={court_idx}
-                  users={reservations}
-                  clickUserName={clickCourtUserName(1, court_idx)}
-                  vertical={vertical}
-                  setCourt={setCourtsMatch}
-                  courtsPrepare={courtsPrepare}
-                  userIdxMatch={userIdxMatch}
-                  setUserIdxMatch={setUserIdxMatch}
-                  ref={handleCourtRefs(1, court_idx)}
-            />
-          </Grid>
+        {courts.map((court, court_idx) => (
+          <React.Fragment key={'court-'+court_idx}>
+            {court.type==1 && 
+              <Grid size={{ xs: 6, sm: 4, md: 3, lg:2, xl:2 }}>
+                <Court updateBodyBlock={updateBodyBlock}
+                      court_idx={court_idx}
+                      courts={courts}
+                      users={reservations}
+                      clickUserName={clickCourtUserName(court_idx)}
+                      vertical={vertical}
+                      setCourts={setCourts}
+                      userIdxMatch={userIdxMatch}
+                      setUserIdxMatch={setUserIdxMatch}
+                      setUsers={setReservations}
+                      ref={handleCourtRefs(court_idx)}
+                />
+              </Grid>
+            }
+          </React.Fragment>
         ))}
       </Grid>
       <Divider sx={{mt:'0.5rem', mb:'0.5rem'}}/>
@@ -278,17 +244,21 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
       {/* 預備場 */}
       <Grid container spacing={1}>
         {!initFinished && [0,0,0,0].map((_, temp_idx) => (<TempCourt key={'tempcourt2-'+temp_idx}/>))}
-        {courtsPrepare.map((court, court_idx) => (
-          <Grid size={{ xs: 6, sm: 4, md: 3, lg:2, xl:2 }} key={'court-'+court_idx}>
-            <Court updateBodyBlock={updateBodyBlock}
-                  court={court}
-                  court_idx={court_idx}
-                  users={reservations}
-                  clickUserName={clickCourtUserName(2, court_idx)}
-                  vertical={vertical}
-                  ref={handleCourtRefs(2, court_idx)}
-            />
-          </Grid>
+        {courts.map((court, court_idx) => (
+          <React.Fragment key={'court-'+court_idx}>
+            {court.type==2 && 
+              <Grid size={{ xs: 6, sm: 4, md: 3, lg:2, xl:2 }}>
+                <Court updateBodyBlock={updateBodyBlock}
+                      court_idx={court_idx}
+                      courts={courts}
+                      users={reservations}
+                      clickUserName={clickCourtUserName(court_idx)}
+                      vertical={vertical}
+                      ref={handleCourtRefs(court_idx)}
+                />
+              </Grid>
+            }
+          </React.Fragment>
         ))}
       </Grid>
 

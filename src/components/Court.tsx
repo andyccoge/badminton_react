@@ -14,8 +14,8 @@ import PauseIcon from '@mui/icons-material/Pause';
 import UserNameCard, {MyChildRef as UserNameCardMyChildRef, UserType} from '../components/UserNameCard';
 
 interface CourtType {
-  id:number, code:string, type:number,
-  duration:number, timer:any, usersIdx:number[],
+  id:number, code:string, type:number, duration:number,
+  usersIdx:number[],
 }
 
 export type MyChildRef = { // 子暴露方法給父
@@ -25,21 +25,21 @@ export type MyChildRef = { // 子暴露方法給父
 type MyChildProps = { // 父傳方法給
   updateBodyBlock: (status) => void;
   court_idx: number,
-  court:CourtType,
+  courts: CourtType[],
   users:UserType[],
+  clickUserName: (refIdx:number) => void;
   vertical?: boolean,
-  setCourt?: (items:any) => void;
-  courtsPrepare?: CourtType[];
+  setCourts?: (items:any) => void;
   userIdxMatch?: number[];
   setUserIdxMatch?: (items:any) => void;
-  clickUserName: (refIdx:number) => void;
+  setUsers?: (items:any) => void;
 };
 
 function Court(
   { 
-    updateBodyBlock, court_idx, court, users,
+    updateBodyBlock, court_idx, courts, users,
     clickUserName, vertical=false,
-    setCourt, courtsPrepare=[], userIdxMatch=[], setUserIdxMatch,
+    setCourts, userIdxMatch=[], setUserIdxMatch, setUsers,
   }: MyChildProps,
   ref: React.Ref<MyChildRef>
 ) {
@@ -64,61 +64,120 @@ function Court(
     }
   }));
 
+  const court = courts[court_idx];
+
   const { enqueueSnackbar } = useSnackbar();
   const showMessage = functions.createEnqueueSnackbar(enqueueSnackbar);
 
   const rootRef = React.useRef<HTMLDivElement | null>(null);
 
+  const [timer, setTimer] = React.useState<any>(null);
   const UserNameCardRef1 = React.useRef<UserNameCardMyChildRef>(null);
   const UserNameCardRef2 = React.useRef<UserNameCardMyChildRef>(null);
   const UserNameCardRef3 = React.useRef<UserNameCardMyChildRef>(null);
   const UserNameCardRef4 = React.useRef<UserNameCardMyChildRef>(null);
 
-  const changeCourt = () => {
+  /*檢查場上人員是否皆未設定*/
+  const isEmptyIdx = (arr: number[]) => arr.length === 4 && arr.every(x => x === -1);
+
+  const changeCourt = async() => {
+    setTimerStop();
+    const courtUpload = JSON.parse(JSON.stringify(court));
+    if(isEmptyIdx(courtUpload.usersIdx)){ return; }
+
     const donwIdx = court.usersIdx;
     /*比賽idx排除本次下場的*/
     userIdxMatch = userIdxMatch.filter((xx)=>{ return donwIdx.indexOf(xx)==-1; });
 
-    let nextIdx = [-1,-1,-1,-1], nextCourtIdx = -1;
-    for (let yy = 0; yy < courtsPrepare.length; yy++) {
-      const idxs = courtsPrepare[yy].usersIdx;
-      const sum = idxs.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-      if(sum==-4){ continue; } /*有設定人員*/
+    let nextUsersIdx = [-1,-1,-1,-1], nextCourtIdx = -1;
+    for (let yy = 0; yy < courts.length; yy++) {
+      if(courts[yy].type!=2){ continue; } /*跳過非預備的場地*/
+      const idxs = courts[yy].usersIdx;
+      if(isEmptyIdx(idxs)){ continue; } /*沒設定人員*/
       /*檢查場上人員是否重複*/
       const set1 = new Set(userIdxMatch);
       if(idxs.filter(item => set1.has(item)).length > 0){
         continue;
       }
-      nextIdx = JSON.parse(JSON.stringify(idxs));
-      nextCourtIdx = nextCourtIdx;
+      nextUsersIdx = JSON.parse(JSON.stringify(idxs));
+      nextCourtIdx = yy;
       break;
     }
-    console.log(nextIdx);
-    
-    /*更新球員下場&上場*/
-    userIdxMatch.concat(nextIdx); /*比賽idx加入本次上場的*/
-    if(setUserIdxMatch){ setUserIdxMatch(userIdxMatch); }
+    console.log(nextUsersIdx, nextCourtIdx);
 
-    /*設定場地球員(上場)*/
-    if(setCourt){
-      setCourt(prev =>
-        prev.map((xx) => (
-          xx.id==court.id ? { ...xx, usersIdx: nextIdx, } : xx
-        ))
-      );
+    /*更新球員下場&上場*/
+    const newUserIdxMatch = userIdxMatch.concat(nextUsersIdx).filter((yy)=>(yy!=-1)) /*比賽idx加入本次上場的*/
+    if(setUserIdxMatch){ setUserIdxMatch(newUserIdxMatch); }
+
+    /*設定場地球員(上場&更新秒數為0)*/
+    if(setCourts){
+      setCourts(prev => {
+        // 拿出 nextCourtIdx 之前的 type==2 且非 [-1,-1,-1,-1]
+        const preserved = prev
+          .slice(0, nextCourtIdx)
+          .filter(cc => cc.type === 2 && !isEmptyIdx(cc.usersIdx))
+          .map(cc => cc.usersIdx);
+
+        // 拿出 nextCourtIdx 之後的 type==2 場次的 idx
+        const toShift = prev
+          .slice(nextCourtIdx+1)
+          .filter(cc => cc.type === 2 && !isEmptyIdx(cc.usersIdx))
+          .map(cc => cc.usersIdx);
+
+        // 合併要放回的 idxs，後面不足補 [-1,-1,-1,-1]
+        const newIdxList = [...preserved, ...toShift];
+        console.log(newIdxList);
+        let shiftPointer = 0;
+        return prev.map((ee,eeid) => {
+          if (ee.type === 2) {
+            let newIdx = newIdxList[shiftPointer] || [-1,-1,-1,-1];
+            shiftPointer++;
+            return { ...ee, usersIdx: newIdx };
+          } else {
+            return eeid==court_idx ? { ...ee, usersIdx: nextUsersIdx, duration: 0, } : ee;
+          }
+        });
+      });
     }
 
     /*更改球員等待&比賽場數*/
+    if(setUsers){
+      setUsers(prev =>
+        prev.map((xx, idx) => {
+          let waitNum = xx.waitNum ? xx.waitNum : 0;
+          let courtNum = xx.courtNum ? xx.courtNum : 0;
+          if(donwIdx.indexOf(idx)!=-1){ /*該球員是下場的人*/
+            waitNum = 0;
+            courtNum += 1;
+          }else if(newUserIdxMatch.indexOf(idx)!=-1){ /*該球員是在比賽的人*/
+            waitNum = 0;
+          }else{ /*其他球員*/
+            waitNum += 1;
+          }
+          return { ...xx, waitNum: waitNum, courtNum: courtNum, }
+        })
+      );
+    }
+
+    if(!isEmptyIdx(nextUsersIdx)){ /*場上有人員*/
+      setTimerStart();
+    }else{
+      showMessage('預備場無可用場次', 'warning');
+    }
 
     /*添加比賽紀錄*/
+    if(!isEmptyIdx(courtUpload.usersIdx)){
+      console.log(courtUpload);
+    }
 
   }
   const setTimerStop = () => {
-    if(setCourt){
-      if(court.timer){
-        clearInterval(court.timer);
+    if(setCourts){
+      if(timer){
+        clearInterval(timer);
+        setTimer(null);
       }
-      setCourt(prev =>
+      setCourts(prev =>
         prev.map((xx) => (
           xx.id==court.id ? { ...xx, timer: null, } : xx
         ))
@@ -126,15 +185,20 @@ function Court(
     }
   }
   const setTimerStart = () => {
-    if(setCourt){
-      court.timer = setInterval(() => {
-        court.duration += 1;
-        setCourt(prev =>
-          prev.map((xx) => (
-            xx.id==court.id ? { ...xx, duration: court.duration, } : xx
-          ))
+    if(isEmptyIdx(court.usersIdx)){ /*場上沒人員*/
+      showMessage('請先設定球員', 'warning'); return;
+    }
+    if(setCourts){
+      setTimer(setInterval(() => {
+        setCourts(prev => prev.map(xx => {
+            if (xx.id === court.id) {
+              const newDuration = xx.duration + 1;
+              return { ...xx, duration: newDuration };
+            }
+            return xx;
+          })
         );
-      }, 1000);
+      }, 1000));
     }
   }
 
@@ -205,7 +269,7 @@ function Court(
         <Grid size={2} display={'flex'} alignItems={'center'} justifyContent={'center'}>
           <TipsAndUpdatesIcon color={'inherit'} fontSize={'small'} className='cursor-pointer'/>
         </Grid>
-        {setCourt && <>
+        {setCourts && <>
           <Grid size={2} display={'flex'} alignItems={'center'} justifyContent={'center'}>
             <AutorenewIcon color={'inherit'} fontSize={'small'} className='cursor-pointer'
               onClick={changeCourt} />
@@ -214,11 +278,11 @@ function Court(
             {functions.formatSeconds(court.duration)}
           </Grid>
           <Grid size={2} display={'flex'} alignItems={'center'} justifyContent={'center'}>
-            {court.timer && <>
+            {timer && <>
               <PauseIcon color={'inherit'} fontSize={'small'} className='cursor-pointer'
                 onClick={setTimerStop} />
             </>}
-            {!court.timer && <>
+            {!timer && <>
               <PlayArrowIcon color={'inherit'} fontSize={'small'} className='cursor-pointer'
                 onClick={setTimerStart} />
             </>}

@@ -116,15 +116,15 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   const [repeatName, setRepeatName] = React.useState<string>();
   const [fuzzyNames, setFuzzyNamesNames] = React.useState<string>();
   const [OkNames, setOkNames] = React.useState<string>();
-  async function batchAdd(tempStr:string='') {
+  async function batchAdd(tempStr:string) {
     if(!batchUserText.trim()){
       showMessage('請設定名單，以「換行」分隔球員', 'error');
       return;
     }
     updateBodyBlock(true); //顯示遮蓋
     // await new Promise((resolve) => { setTimeout(() => {resolve(null);}, 100); })
-    let names = functions.getTextareaUserNames(tempStr ? tempStr : batchUserText);
-    console.log(names);
+    let names = functions.getTextareaUserNames(tempStr);
+    // console.log(names);
 
     try {
       let result = await functions.fetchData('PUT', 'user_batch', {names:names, play_date_id:play_date_id});
@@ -419,7 +419,7 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
                 />
             </Grid>
             <Grid size={{xs:12, sm:1}}>
-              <Button onClick={()=>{batchAdd()}}>送出</Button>
+              <Button onClick={()=>{batchAdd(batchUserText)}}>送出</Button>
             </Grid>
           </Grid>
           <TableUsers updateBodyBlock={updateBodyBlock}

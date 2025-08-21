@@ -34,7 +34,7 @@ export interface UserType {
   level: number,
   gender: number,
   show_up: number,
-  wait: number,
+  waitNum: number,
   courtNum: number,
   groupNumber: number,
 }
@@ -98,7 +98,7 @@ function UserNameCard(
             <br/>
             <em>⭐:</em>{user?.level || 0}&nbsp;&nbsp;{/* 等級 */}
             <em>🎌:</em>{user?.courtNum || 0}&nbsp;&nbsp;{/* 比賽場數 */}
-            <em>💤:</em>{user?.wait || 0}{/* 等待 */}
+            <em>💤:</em>{user?.waitNum || 0}{/* 等待 */}
             {user?.id && <Grid container spacing={2}> 
               <Grid size={3} textAlign={'center'}>
                 <EmojiPeopleIcon className='cursor-pointer' fontSize={'small'}
@@ -141,7 +141,7 @@ function UserNameCard(
           <Typography variant='caption' sx={{wordBreak: 'break-all',}} display={'inline-flex'} lineHeight={1}>
             <em className='inline-block'>⭐<em className='inline-block'>{user?.level || 0}</em></em>
             <em className='inline-block'>🎌<em className='inline-block'>{user?.courtNum || 0}</em></em>
-            <em className='inline-block'>💤<em className='inline-block'>{user?.wait || 0}</em></em>
+            <em className='inline-block'>💤<em className='inline-block'>{user?.waitNum || 0}</em></em>
           </Typography>
         </CardContent>
       </HtmlTooltip>
