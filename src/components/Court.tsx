@@ -89,7 +89,7 @@ function Court(
       if(idxs.filter(item => set1.has(item)).length > 0){
         continue;
       }
-      nextIdx = idxs;
+      nextIdx = JSON.parse(JSON.stringify(idxs));
       nextCourtIdx = nextCourtIdx;
       break;
     }
@@ -144,7 +144,7 @@ function Court(
         maxWidth: 345,
         backgroundSize: '100% 100%',
         bgcolor:(court && court.type==1)?'#00aa55':'#ffcc33',
-        backgroundImage: "url(/public/img/"+(vertical?"badminton_court_v_e.png":"badminton_court_e.png")+")",
+        backgroundImage: "url(/img/"+(vertical?"badminton_court_v_e.png":"badminton_court_e.png")+")",
       }}>
         <CardContent style={{padding:0,}}>
           <Grid container spacing={1} padding={vertical?'5px 10px':'10px 0'}

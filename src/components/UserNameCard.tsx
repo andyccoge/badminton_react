@@ -127,6 +127,7 @@ function UserNameCard(
             ],
           },
         }}
+        sx={{display:user_idx==-1?'none':'block',}}
       >
         <CardContent style={{padding:0}} className='cursor-pointer' onClick={()=>{onClick()}}
                      sx={{
