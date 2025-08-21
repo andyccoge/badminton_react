@@ -83,7 +83,6 @@ function Court(
   const changeCourt = async() => {
     setTimerStop();
     const courtUpload = JSON.parse(JSON.stringify(court));
-    if(isEmptyIdx(courtUpload.usersIdx)){ return; }
 
     const donwIdx = court.usersIdx;
     /*比賽idx排除本次下場的*/
@@ -104,6 +103,7 @@ function Court(
       break;
     }
     console.log(nextUsersIdx, nextCourtIdx);
+    if(isEmptyIdx(nextUsersIdx)){ showMessage('預備場無可用場次', 'warning');return; }
 
     /*更新球員下場&上場*/
     const newUserIdxMatch = userIdxMatch.concat(nextUsersIdx).filter((yy)=>(yy!=-1)) /*比賽idx加入本次上場的*/
@@ -159,11 +159,8 @@ function Court(
       );
     }
 
-    if(!isEmptyIdx(nextUsersIdx)){ /*場上有人員*/
-      setTimerStart();
-    }else{
-      showMessage('預備場無可用場次', 'warning');
-    }
+    /*開始計時*/
+    setTimerStart();
 
     /*添加比賽紀錄*/
     if(!isEmptyIdx(courtUpload.usersIdx)){
