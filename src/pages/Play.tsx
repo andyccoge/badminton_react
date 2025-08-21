@@ -134,9 +134,9 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
         setSelectedCourtType(type);
         setSelectedCourtIdx(courtIdx);
         setSelectedNameIdx(refIdx);
-        // 捲動到場次
-        // const tempCourtsRefs = type==1 ? CourtMatchRefs : CourtPrepareRefs;
-        // tempCourtsRefs?.current[courtIdx].current?.scrollToSelf();
+        // 捲動到該場地
+        const tempCourtsRefs = type==1 ? CourtMatchRefs : CourtPrepareRefs;
+        tempCourtsRefs?.current[courtIdx].current?.scrollToSelf();
         BottomNavigationRef?.current?.setUserPanelDrawerOpen(true);
       }
     }
@@ -156,6 +156,8 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
         nameRefs[selectedNameIdx].current?.setSelectedStatus(false);
         if(nextIdx!=-1){ /*場地還有空位代設定球員*/
             nameRefs[nextIdx].current?.setSelectedStatus(true);
+            // 捲動到該場地
+            tempCourtsRefs?.current[selectedCourtIdx].current?.scrollToSelf();
             setSelectedNameIdx(nextIdx);
         }else{
           await setSelectedCourtType(0);

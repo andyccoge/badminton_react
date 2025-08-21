@@ -54,7 +54,7 @@ function Court(
       if (!rootRef.current) return;
       const top = rootRef.current.getBoundingClientRect().top + window.scrollY;
       window.scrollTo({
-        top: top - 64, // 1rem ≈ 16px
+        top: top - 16, // 1rem ≈ 16px
         behavior: "smooth",
       });
       // rootRef.current?.scrollIntoView({
