@@ -1,4 +1,4 @@
-import * as functions from '../functions.tsx'
+import * as functions from '../../functions.tsx';
 import * as React from 'react';
 import { useSnackbar } from 'notistack';
 

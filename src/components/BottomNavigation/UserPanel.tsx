@@ -9,12 +9,11 @@ import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
 import UserNameCard, {MyChildRef as UserNameCardMyChildRef, UserType} from '../../components/UserNameCard';
-import { Link } from 'react-router-dom';
 
 export type MyChildRef = { // 子暴露方法給父
 };
 type MyChildProps = { // 父傳方法給子
-  updateBodyBlock: () => void;
+  updateBodyBlock: (status) => void;
   open: boolean;
   onClose: () => void;
   users?:UserType[];
@@ -22,11 +21,16 @@ type MyChildProps = { // 父傳方法給子
   setUserShowUp?: (idx:number) => void;
   setUserLeave?: (idx:number) => void;
   userIdxMatch?:number[];
+  userIdxMatchCode?:{};
+  userIdxPrepare?:number[];
+  setUserModel?: (idx:number, item:any) => void;
+  setUserDrawer?: (idx:number, item:any) => void;
 };
 
 const UserPanel = React.forwardRef<MyChildRef, MyChildProps>((
   { updateBodyBlock, open, onClose, users=[], 
-    doSelectUser, setUserShowUp, setUserLeave, userIdxMatch=[],
+    doSelectUser, setUserShowUp, setUserLeave, userIdxMatch=[], userIdxMatchCode={}, userIdxPrepare=[],
+    setUserModel, setUserDrawer,
   }, ref
 ) => {
   const NameRefs = React.useRef<Array<React.RefObject<UserNameCardMyChildRef | null>>>([]);
@@ -70,10 +74,15 @@ const UserPanel = React.forwardRef<MyChildRef, MyChildProps>((
               updateBodyBlock={updateBodyBlock}
               user_idx={idx}
               user={user}
+              showGender={true}
               onClick={()=>{ if(doSelectUser){doSelectUser(idx)} }}
               setUserShowUp={setUserShowUp}
               setUserLeave={setUserLeave}
               userIdxMatch={userIdxMatch}
+              userIdxPrepare={userIdxPrepare}
+              matchCourtCode={userIdxMatchCode[idx]??''}
+              setUserModel={setUserModel}
+              setUserDrawer={setUserDrawer}
               ref={handleNameRefs(idx)}
             ></UserNameCard>
           ))}

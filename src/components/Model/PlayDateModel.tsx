@@ -1,4 +1,4 @@
-import * as functions from '../functions.tsx';
+import * as functions from '../../functions.tsx';
 import * as React from 'react';
 import { useSnackbar } from 'notistack';
 
@@ -18,7 +18,7 @@ const Transition = React.forwardRef(function Transition(
 });
 
 export type MyChildRef = { // 子暴露方法給父
-  setModel: (idx, item) => void;
+  setModel: (idx, item, primaryKey?) => void;
 };
 type MyChildProps = { // 父傳方法給子
   updateBodyBlock: (status) => void;
@@ -39,6 +39,7 @@ const PlayDateModel = React.forwardRef<MyChildRef, MyChildProps>((
   const { enqueueSnackbar } = useSnackbar();
   const showMessage = functions.createEnqueueSnackbar(enqueueSnackbar);
 
+  const [primaryId, setPrimaryId] = React.useState(0);
   const [index, setIndex] = React.useState(-1);
   const [form, setForm] = React.useState(JSON.parse(JSON.stringify(empty_data)));
   const handleChange_sd = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,7 +67,7 @@ const PlayDateModel = React.forwardRef<MyChildRef, MyChildProps>((
 
   // expose focus() method to parent
   React.useImperativeHandle(ref, () => ({
-    setModel: (idx, item) => {
+    setModel: (idx, item, primaryKey='id') => {
       let data = Object.keys(empty_data).reduce(
         (acc, key) => {
           acc[key] = item.hasOwnProperty(key) ? item[key] : empty_data[key];
@@ -75,8 +76,9 @@ const PlayDateModel = React.forwardRef<MyChildRef, MyChildProps>((
         {}
       );
       // console.log(data)
-      setIndex(idx)
-      setForm(data)
+      setIndex(idx);
+      setForm(data);
+      setPrimaryId(item[primaryKey]);
       setOpen(true);
     },
   }));
@@ -99,7 +101,7 @@ const PlayDateModel = React.forwardRef<MyChildRef, MyChildProps>((
           setOpen(false);
         }
       }else{ // 編輯
-        result = await functions.fetchData('PUT', 'play_date', form, {id:form.id});
+        result = await functions.fetchData('PUT', 'play_date', form, {id:primaryId});
         if(result.msg){
           showMessage(result.msg, 'error');
         }else{

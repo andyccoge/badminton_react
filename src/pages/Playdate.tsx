@@ -20,15 +20,15 @@ import AdminNav from '../components/AdminNav.tsx'
 import TableUsers, {
   MyChildRef as TableUsersMyChildRef, empty_searchForm as emptyUserSearchForm
 } from '../components/TableUsers.tsx';
-import UserModel, {MyChildRef as UserModelMyChildRef} from '../components/UserModel';
+import UserModel, {MyChildRef as UserModelMyChildRef} from '../components/Model/UserModel';
 import TableCourts, {
   MyChildRef as TableCourtsMyChildRef, empty_searchForm as emptyCourtSearchForm
 } from '../components/TableCourts.tsx';
-import CourtModel, {MyChildRef as CourtModelMyChildRef} from '../components/CourtModel';
+import CourtModel, {MyChildRef as CourtModelMyChildRef} from '../components/Model/CourtModel';
 import TableMatchs, {
   MyChildRef as TableMatchsMyChildRef, empty_searchForm as emptyMatchSearchForm
 } from '../components/TableMatchs.tsx';
-import MatchModel, {MyChildRef as MatchModelMyChildRef} from '../components/MatchModel';
+import MatchModel, {MyChildRef as MatchModelMyChildRef} from '../components/Model/MatchModel';
 
 import {Dialog,DialogActions,DialogContent,DialogContentText,DialogTitle} from '@mui/material';
 import { FormHelperText } from '@mui/material';
@@ -205,7 +205,7 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   const clickTableUsers = (idx:number, item:any) => {
     // console.log(item);
     if(idx<0 && idx>=reservations.length){ return; }
-    UserModelRef.current?.setModel(idx, item); // 呼叫 child 的方法
+    UserModelRef.current?.setModel(idx, item, 'user_id'); // 呼叫 child 的方法
   }
 
   const UserModelRef = React.useRef<UserModelMyChildRef>(null);
@@ -213,7 +213,7 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
     TableUsersRef.current?.goSearch();
   }
   const renewListUsers = async (idx, item)=>{
-    reservations[idx] = item;
+    reservations[idx] = {...reservations[idx], ...item};
     setReservations(reservations);
     TableUsersRef.current?.showRows(reservations);
   }
@@ -282,7 +282,7 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
     TableCourtsRef.current?.goSearch();
   }
   const renewListCourts = async (idx, item)=>{
-    courts[idx] = item;
+    courts[idx] = {...courts[idx], ...item};
     setReservations(courts);
     TableCourtsRef.current?.showRows(courts);
   }
@@ -346,7 +346,7 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   }
   const renewListMatchs = async (idx, item)=>{
     item['duration'] = Number(item['duration']);
-    matchs[idx] = item;
+    matchs[idx] = {...matchs[idx], ...item};
     setMatchs(matchs);
     TableMatchsRef.current?.showRows(matchs);
   }

@@ -16,7 +16,7 @@ import * as functions from '../functions.tsx'
 
 import SearchFormModel, {
   MyChildRef as SearchFormModelMyChildRef
-} from '../components/SearchFormModel';
+} from '../components/Model/SearchFormModel';
 
 interface SearchForm {
   ids: any[];
@@ -41,7 +41,7 @@ interface Column {
   format?: (value: number) => string;
 }
 
-interface Data {
+export interface Data {
   id:number,
   user_id_1:number,
   user_id_2:number,

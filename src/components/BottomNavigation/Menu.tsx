@@ -9,9 +9,10 @@ import ScoreboardIcon from '@mui/icons-material/Scoreboard';
 import SettingsIcon from '@mui/icons-material/Settings';
 interface BottomMenuProps {
   onUserClick: () => void;
+  onMatchClick: () => void;
 }
 
-export default function BottomMenu({ onUserClick }: BottomMenuProps) {
+export default function BottomMenu({ onUserClick,onMatchClick }: BottomMenuProps) {
   const [value, setValue] = React.useState(0);
 
   return (
@@ -23,14 +24,14 @@ export default function BottomMenu({ onUserClick }: BottomMenuProps) {
           setValue(newValue);
         }}
       >
-        <BottomNavigationAction
-          label="球員"
-          icon={<GroupAddIcon />}
-          onClick={onUserClick} // 呼叫父層傳來的函數
-        />
-        <BottomNavigationAction label="場地" icon={<LibraryAddIcon />} />
-        <BottomNavigationAction label="比數" icon={<ScoreboardIcon />} />
-        <BottomNavigationAction label="參數" icon={<SettingsIcon />} />
+        <BottomNavigationAction onClick={onUserClick} // 呼叫父層傳來的函數
+          label="球員" icon={<GroupAddIcon />}/>
+        <BottomNavigationAction onClick={()=>{}} // 呼叫父層傳來的函數
+          label="場地" icon={<LibraryAddIcon />} />
+        <BottomNavigationAction onClick={onMatchClick} // 呼叫父層傳來的函數
+          label="比數" icon={<ScoreboardIcon />} />
+        <BottomNavigationAction onClick={()=>{}} // 呼叫父層傳來的函數
+          label="參數" icon={<SettingsIcon />} />
       </BottomNavigation>
     </Box>
   );

@@ -21,9 +21,9 @@ import Fab from '@mui/material/Fab';
 import AddIcon from '@mui/icons-material/Add';
 
 import AdminNav from '../components/AdminNav'
-import PlayDateModel, {MyChildRef as playDateModelMyChildRef} from '../components/PlayDateModel'
+import PlayDateModel, {MyChildRef as playDateModelMyChildRef} from '../components/Model/PlayDateModel';
 import PlaydateCard from '../components/PlaydateCard'
-import PlaydateCalendar, {MyChildRef as PlaydateCalendarMyChildRef} from '../components/PlaydateCalendar'
+import PlaydateCalendar, {MyChildRef as PlaydateCalendarMyChildRef} from '../components/PlaydateCalendar';
 
 const today = new Date();
 const alertTime_s = -1*60*60*1000;    /*提醒時間-開始(目前時間往前算1小時)*/
@@ -115,7 +115,7 @@ function Playdates({updateBodyBlock, showConfirmModelStatus}) {
     return data;
   }
   const renewList = async (idx, item)=>{
-    cards[idx] = item;
+    cards[idx] = {...cards[idx], ...item};
     setCards(cards);
   }
 

@@ -13,7 +13,7 @@ import AdminNav from '../components/AdminNav.tsx'
 import TableUsers, {
   MyChildRef as TableUsersMyChildRef, empty_searchForm as emptyUserSearchForm
 } from '../components/TableUsers.tsx';
-import UserModel, {MyChildRef as UserModelMyChildRef} from '../components/UserModel';
+import UserModel, {MyChildRef as UserModelMyChildRef} from '../components/Model/UserModel';
 
 import {Dialog,DialogActions,DialogContent,DialogContentText,DialogTitle} from '@mui/material';
 import { FormHelperText } from '@mui/material';
@@ -99,7 +99,7 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
   const openUserModel = (id, index) =>{
     let tempData = index==-1 ? {} : users[index]
     // console.log(id+':'+index)
-    userModelRef.current?.setModel(index, tempData); // 呼叫 child 的方法
+    UserModelRef.current?.setModel(index, tempData); // 呼叫 child 的方法
   }
 
   const [batchUserText, setBatchUserText] = React.useState("");
@@ -155,12 +155,12 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
     openUserModel(item.id, idx);
   }
 
-  const userModelRef = React.useRef<UserModelMyChildRef>(null);
+  const UserModelRef = React.useRef<UserModelMyChildRef>(null);
   const reGetList = async () => {
     TableUsersRef.current?.goSearch();
   }
   const renewList = async (idx, item)=>{
-    users[idx] = item;
+    users[idx] = {...users[idx], ...item};
     setUers(users);
     TableUsersRef.current?.showRows(users);
   }
@@ -259,7 +259,7 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
       <UserModel updateBodyBlock={updateBodyBlock}
                   reGetList={reGetList}
                   renewList={renewList}
-                  ref={userModelRef} />
+                  ref={UserModelRef} />
     </>
   )
 }

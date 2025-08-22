@@ -1,4 +1,4 @@
-import * as functions from '../functions.tsx'
+import * as functions from '../../functions.tsx';
 import * as React from 'react';
 import { useSnackbar } from 'notistack';
 
@@ -21,26 +21,37 @@ const Transition = React.forwardRef(function Transition(
 });
 
 export type MyChildRef = { // 子暴露方法給父
-  setModel: (idx, item) => void;
+  setModel: (idx, item, primaryKey?) => void;
+  setUserMap:(map:any) => void;
 };
 type MyChildProps = { // 父傳方法給子
   updateBodyBlock: (status) => void;
   reGetList: () => void;
   renewList: (idx, item) => void;
+  userMap?: any,
 };
 
 const empty_data = {
   "id":-1,
-  "play_date_id": 0,
-  "code": "",
-  "type": 1
+  "user_id_1":0,
+  "user_id_2":0,
+  "user_id_3":0,
+  "user_id_4":0,
+  "play_date_id":0,
+  "court_id":0,
+  "point_12":0,
+  "point_34":0,
+  "duration":0,
 }
-const CourtModel = React.forwardRef<MyChildRef, MyChildProps>((
-  { updateBodyBlock,reGetList,renewList }, ref
+const MatchModel = React.forwardRef<MyChildRef, MyChildProps>((
+  { updateBodyBlock, reGetList, renewList, userMap={} }, ref
 ) => {
   const { enqueueSnackbar } = useSnackbar();
   const showMessage = functions.createEnqueueSnackbar(enqueueSnackbar);
 
+  const [userIdMap, setUserIdMap] = React.useState<any>(userMap);
+
+  const [primaryId, setPrimaryId] = React.useState(0);
   const [index, setIndex] = React.useState(-1);
   const [form, setForm] = React.useState(JSON.parse(JSON.stringify(empty_data)));
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,7 +68,7 @@ const CourtModel = React.forwardRef<MyChildRef, MyChildProps>((
 
   // expose focus() method to parent
   React.useImperativeHandle(ref, () => ({
-    setModel: (idx, item) => {
+    setModel: (idx, item, primaryKey='id') => {
       let data = Object.keys(empty_data).reduce(
         (acc, key) => {
           acc[key] = item.hasOwnProperty(key) ? item[key] : empty_data[key];
@@ -66,10 +77,12 @@ const CourtModel = React.forwardRef<MyChildRef, MyChildProps>((
         {}
       );
       // console.log(data)
-      setIndex(idx)
-      setForm(data)
+      setIndex(idx);
+      setForm(data);
+      setPrimaryId(item[primaryKey]);
       setOpen(true);
     },
+    setUserMap:(map) => { setUserIdMap(map); },
   }));
 
   const [open, setOpen] = React.useState(false);
@@ -82,7 +95,7 @@ const CourtModel = React.forwardRef<MyChildRef, MyChildProps>((
     let result:any = null;
     try {
       if(form.id==-1){ // 新增
-        result = await functions.fetchData('POST', 'courts', form);
+        result = await functions.fetchData('POST', 'matchs', form);
         if(result.msg){
           showMessage(result.msg, 'error');
         }else{
@@ -90,7 +103,7 @@ const CourtModel = React.forwardRef<MyChildRef, MyChildProps>((
           setOpen(false);
         }
       }else{ // 編輯
-        result = await functions.fetchData('PUT', 'courts', form, {id:form.id});
+        result = await functions.fetchData('PUT', 'matchs', form, {id:primaryId});
         if(result.msg){
           showMessage(result.msg, 'error');
         }else{
@@ -116,30 +129,35 @@ const CourtModel = React.forwardRef<MyChildRef, MyChildProps>((
         onClose={handleClose}
         aria-describedby="alert-dialog-slide-description"
       >
-        <DialogTitle>{"場地資料"}</DialogTitle>
+        <DialogTitle>{"比賽資料"}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2}>
-            <Grid size={{xs:12, sm:6}}></Grid>
             <Grid size={{xs:12, sm:6}}>
-              <Stack direction={{xs:"column", md:"row"}} spacing={2}>
-                <TextField fullWidth variant="filled" size="small"
+              {
+                [
+                  userIdMap[form.user_id_1] && userIdMap[form.user_id_1].name,
+                  userIdMap[form.user_id_2] && userIdMap[form.user_id_2].name
+                ].filter((has)=>{return has}).join('、')
+              }
+              <TextField fullWidth variant="filled" size="small" type="number"
                         onChange={handleChange} onKeyDown={handleKeyDown} 
-                        label="編號" name="code" value={form.code}/>
-                <FormControl variant="filled" size="small" sx={{ minWidth: 75 }} >
-                  <InputLabel id="courtForm_type">類型</InputLabel>
-                  <Select
-                    labelId="courtForm_type"
-                    name="type"
-                    value={form.type}
-                    onChange={handleSelectChange}
-                    autoWidth
-                    label="類型"
-                  >
-                    <MenuItem value={1}>比賽</MenuItem>
-                    <MenuItem value={2}>預備</MenuItem>
-                  </Select>
-                </FormControl>
-              </Stack>
+                        label="隊伍1比數" name="point_12" value={form.point_12}/>
+            </Grid>
+            <Grid size={{xs:12, sm:6}}>
+              {
+                [
+                  userIdMap[form.user_id_3] && userIdMap[form.user_id_3].name,
+                  userIdMap[form.user_id_4] && userIdMap[form.user_id_4].name
+                ].filter((has)=>{return has}).join('、')
+              }
+              <TextField fullWidth variant="filled" size="small" type="number"
+                        onChange={handleChange} onKeyDown={handleKeyDown} 
+                        label="隊伍2比數" name="point_34" value={form.point_34}/>
+            </Grid>
+            <Grid size={{xs:12, sm:6}}>
+              <TextField fullWidth variant="filled" size="small" type="number"
+                        onChange={handleChange} onKeyDown={handleKeyDown} 
+                        label="比賽用時(秒)" name="duration" value={form.duration}/>
             </Grid>
           </Grid>
           <DialogContentText id="alert-dialog-slide-description">
@@ -153,4 +171,4 @@ const CourtModel = React.forwardRef<MyChildRef, MyChildProps>((
     </React.Fragment>
   );
 });
-export default CourtModel;
+export default MatchModel;

@@ -14,7 +14,7 @@ import {Button} from '@mui/material';
 
 import SearchFormModel, {
   MyChildRef as SearchFormModelMyChildRef
-} from '../components/SearchFormModel';
+} from '../components/Model/SearchFormModel';
 
 interface SearchForm {
   ids: any[];
