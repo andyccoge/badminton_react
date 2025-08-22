@@ -103,8 +103,7 @@ function Court(
       break;
     }
     console.log(nextUsersIdx, nextCourtIdx);
-    if(isEmptyIdx(nextUsersIdx)){ showMessage('預備場無可用場次', 'warning');return; }
-
+  
     /*更新球員下場&上場*/
     const newUserIdxMatch = userIdxMatch.concat(nextUsersIdx).filter((yy)=>(yy!=-1)) /*比賽idx加入本次上場的*/
     if(setUserIdxMatch){ setUserIdxMatch(newUserIdxMatch); }
@@ -140,6 +139,7 @@ function Court(
       });
     }
 
+    const nextEmpty = isEmptyIdx(nextUsersIdx);
     /*更改球員等待&比賽場數*/
     if(setUsers){
       setUsers(prev =>
@@ -151,7 +151,8 @@ function Court(
             courtNum += 1;
           }else if(newUserIdxMatch.indexOf(idx)!=-1){ /*該球員是在比賽的人*/
             waitNum = 0;
-          }else{ /*其他球員*/
+          }else if(!nextEmpty){ /*下一場不是空白的*/
+            /*其他球員*/
             waitNum += 1;
           }
           return { ...xx, waitNum: waitNum, courtNum: courtNum, }
@@ -160,7 +161,11 @@ function Court(
     }
 
     /*開始計時*/
-    setTimerStart();
+    if(!nextEmpty){
+      setTimerStart(true);
+    }else{
+      showMessage('無可用的預備場場次', 'warning');
+    }
 
     /*添加比賽紀錄*/
     if(!isEmptyIdx(courtUpload.usersIdx)){
@@ -181,8 +186,8 @@ function Court(
       );
     }
   }
-  const setTimerStart = () => {
-    if(isEmptyIdx(court.usersIdx)){ /*場上沒人員*/
+  const setTimerStart = (force=false) => {
+    if(!force && isEmptyIdx(court.usersIdx)){ /*場上沒人員*/
       showMessage('請先設定球員', 'warning'); return;
     }
     if(setCourts){
@@ -281,7 +286,7 @@ function Court(
             </>}
             {!timer && <>
               <PlayArrowIcon color={'inherit'} fontSize={'small'} className='cursor-pointer'
-                onClick={setTimerStart} />
+                onClick={()=>{setTimerStart()}} />
             </>}
           </Grid>
           <Grid size={2} display={'flex'} alignItems={'center'} justifyContent={'center'}>
