@@ -13,6 +13,7 @@ import PauseIcon from '@mui/icons-material/Pause';
 
 import UserNameCard, {MyChildRef as UserNameCardMyChildRef} from '../components/UserNameCard';
 import {ReservationsType} from '../components/ReservationDrawer';
+import { Data as MatchData } from '../components/TableMatchs.tsx';
 
 interface CourtType {
   id:number, code:string, type:number, duration:number,
@@ -40,7 +41,7 @@ type MyChildProps = { // 父傳方法給
   setUserLeave?: (idx:number) => void;
   setUserModel?: (idx:number, item:any) => void;
   setUserDrawer?: (idx:number, item:any) => void;
-  setMatchs?: (items:any) => void;
+  addMatchs?: (newMatch:MatchData) => void;
 };
 
 function Court(
@@ -49,7 +50,7 @@ function Court(
     clickUserName, vertical=false,
     userIdxMatch, userIdxMatchCode, setUserIdxPrepare, setCourts, updateUserIdxMatchCode, 
     setUsers, setUserShowUp, setUserLeave,
-    setUserModel, setUserDrawer, setMatchs,
+    setUserModel, setUserDrawer, addMatchs,
   }: MyChildProps,
   ref: React.Ref<MyChildRef>
 ) {
@@ -186,10 +187,11 @@ function Court(
     if(!isEmptyIdx(courtUpload.usersIdx)){
       // console.log(courtUpload);
       const data = {
-        user_id_1: users[courtUpload.usersIdx[0]].user_id,
-        user_id_2: users[courtUpload.usersIdx[1]].user_id,
-        user_id_3: users[courtUpload.usersIdx[2]].user_id,
-        user_id_4: users[courtUpload.usersIdx[3]].user_id,
+        id: Math.round(Math.random() * 100000),
+        user_id_1: users[courtUpload.usersIdx[0]] ? users[courtUpload.usersIdx[0]].user_id : null,
+        user_id_2: users[courtUpload.usersIdx[1]] ? users[courtUpload.usersIdx[1]].user_id : null,
+        user_id_3: users[courtUpload.usersIdx[2]] ? users[courtUpload.usersIdx[2]].user_id : null,
+        user_id_4: users[courtUpload.usersIdx[3]] ? users[courtUpload.usersIdx[3]].user_id : null,
         play_date_id: courtUpload.play_date_id,
         court_id: courtUpload.id,
         duration: courtUpload.duration,
@@ -201,12 +203,12 @@ function Court(
         if(result.msg){
           showMessage(result.msg, 'error');
         }
-        data['id'] = Math.round(Math.random() * 100000);
+        data.id = result.saved[0];
       } catch (error) {
         // console.error('Error fetching data:', error);
         showMessage('發生錯誤', 'error');
       }
-      if(setMatchs){setMatchs(prev => prev.push(data));}
+      if(addMatchs){addMatchs(data);}
     }
     updateBodyBlock(false); //隱藏遮蓋
   }

@@ -43,10 +43,8 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
 
   const [initFinished, setInitFinished] = React.useState(false);
   const [courts, setCourts] = React.useState<any[]>([]);
-  const [matchs, setMatchs] = React.useState<any[]>([]);
   const [cards, setCards] = React.useState<any[]>([]);
   const [reservations, setReservations] = React.useState<any[]>([]);
-  const [user_map, setUserMap] = React.useState<any>({});
 
   /*在比賽場中的球員idx(有紀錄表示在場上)*/
   const [userIdxMatch, setUserIdxMatch] = React.useState<number[]>([]);
@@ -83,10 +81,6 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
   const setPlayCourts = (courts:any[]) => {
     setCourts(courts.map((item)=>{ return initCourt(item); }));
   }
-  const setPlayMatchs = (result:{matchs:MatchData[]; user_map:any}) => {
-    setMatchs(result.matchs);
-    setUserMap(result.user_map);
-  }
 
   React.useEffect(() => {
     (async () => {
@@ -104,7 +98,7 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
         setCards([result.play_date]);
         setPlayUsers(result.reservations);
         setPlayCourts(result.courts);
-        setPlayMatchs(result);
+        BottomNavigationRef.current?.setPlayMatchs(result);
         // TableUsersRef.current?.showRows(result.reservations);
       } catch (error) {
         // console.error('Error fetching data:', error);
@@ -134,7 +128,11 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
       CourtRefs.current[index] = { current: null };
     }
   };
-
+  const addMatchs = (newMatch:MatchData) => {
+    const matchs = BottomNavigationRef.current?.getMatchs() ?? [];
+    matchs.push(newMatch);
+    BottomNavigationRef.current?.showMatchs(matchs);
+  }
   const cleanSeletedCourtName = () => {
     const selectedCourt = CourtRefs?.current[selectedCourtIdx];
     if(!selectedCourt){ return; }
@@ -158,7 +156,7 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
         setSelectedNameIdx(refIdx);
         // 捲動到該場地
         tempRef.current?.scrollToSelf();
-        BottomNavigationRef?.current?.setUserPanelDrawerOpen(true);
+        BottomNavigationRef.current?.setUserPanelDrawerOpen(true);
       }
     }
     return clickUserName
@@ -181,7 +179,7 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
         }else{
           await setSelectedCourtIdx(-1);
           await setSelectedNameIdx(-1);
-          BottomNavigationRef?.current?.setUserPanelDrawerOpen(false);
+          BottomNavigationRef.current?.setUserPanelDrawerOpen(false);
         }
       }
     }
@@ -308,7 +306,7 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
                       setUserLeave={setUserLeave}
                       setUserModel={setUserModel}
                       setUserDrawer={setUserDrawer}
-                      setMatchs={setMatchs}
+                      addMatchs={addMatchs}
                       ref={handleCourtRefs(court_idx)}
                 />
               </Grid>
@@ -366,9 +364,6 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
         <BottomNavigation updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}
           playDateId={play_date_id}
           users={reservations}
-          matchs={matchs}
-          user_map={user_map}
-          setPlayMatchs={setPlayMatchs}
           cleanSeletedCourtName={cleanSeletedCourtName}
           doSelectUser={doSelectUser}
           setUserShowUp={setUserShowUp}

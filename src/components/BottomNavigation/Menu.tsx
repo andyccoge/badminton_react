@@ -13,7 +13,7 @@ interface BottomMenuProps {
 }
 
 export default function BottomMenu({ onUserClick,onMatchClick }: BottomMenuProps) {
-  const [value, setValue] = React.useState(0);
+  const [value, setValue] = React.useState('');
 
   return (
     <Box sx={{ minWidth: 300 }}>

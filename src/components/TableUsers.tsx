@@ -10,6 +10,7 @@ import TableRow from '@mui/material/TableRow';
 import Checkbox from '@mui/material/Checkbox';
 
 import SearchIcon from '@mui/icons-material/Search';
+import AutorenewIcon from '@mui/icons-material/Autorenew';
 import {Button} from '@mui/material';
 
 import SearchFormModel, {
@@ -179,6 +180,10 @@ function TableUsers(
       <Button size="small" sx={{mr:'1rem',alignSelf:'center'}} 
               onClick={()=>{SearchFormModelRef.current?.setFormModel(true)}}>
         搜尋設定<SearchIcon />
+      </Button>
+      <Button size="small" sx={{alignSelf:'center'}} variant="text" color="info"
+              onClick={()=>{goSearch()}}>
+        <AutorenewIcon color={'inherit'} fontSize={'small'} className='cursor-pointer' />
       </Button>
       <Button size="small" sx={{alignSelf:'center'}} variant="text" color="info" 
               onClick={()=>{SearchFormModelRef.current?.cleanSearch()}}>

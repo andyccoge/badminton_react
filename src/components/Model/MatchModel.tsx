@@ -6,7 +6,7 @@ import Button from '@mui/material/Button';
 import {Dialog,DialogActions,DialogContent,DialogContentText,DialogTitle} from '@mui/material';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
-import {TextField, Stack, Grid} from '@mui/material';
+import {TextField, Stack, Grid, Divider} from '@mui/material';
 
 import {FormControl, InputLabel, MenuItem} from '@mui/material';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
@@ -28,7 +28,6 @@ type MyChildProps = { // 父傳方法給子
   updateBodyBlock: (status) => void;
   reGetList: () => void;
   renewList: (idx, item) => void;
-  userMap?: any,
 };
 
 const empty_data = {
@@ -44,12 +43,12 @@ const empty_data = {
   "duration":0,
 }
 const MatchModel = React.forwardRef<MyChildRef, MyChildProps>((
-  { updateBodyBlock, reGetList, renewList, userMap={} }, ref
+  { updateBodyBlock, reGetList, renewList, }, ref
 ) => {
   const { enqueueSnackbar } = useSnackbar();
   const showMessage = functions.createEnqueueSnackbar(enqueueSnackbar);
 
-  const [userIdMap, setUserIdMap] = React.useState<any>(userMap);
+  const [userIdMap, setUserIdMap] = React.useState<any>({});
 
   const [primaryId, setPrimaryId] = React.useState(0);
   const [index, setIndex] = React.useState(-1);
@@ -133,28 +132,31 @@ const MatchModel = React.forwardRef<MyChildRef, MyChildProps>((
         <DialogContent>
           <Grid container spacing={2}>
             <Grid size={{xs:12, sm:6}}>
+              隊伍1：<br />
               {
                 [
                   userIdMap[form.user_id_1] && userIdMap[form.user_id_1].name,
                   userIdMap[form.user_id_2] && userIdMap[form.user_id_2].name
-                ].filter((has)=>{return has}).join('、')
+                ].filter((has)=>{return has}).join('、') || '(無球員)'
               }
               <TextField fullWidth variant="filled" size="small" type="number"
                         onChange={handleChange} onKeyDown={handleKeyDown} 
                         label="隊伍1比數" name="point_12" value={form.point_12}/>
             </Grid>
             <Grid size={{xs:12, sm:6}}>
+              隊伍2：<br />
               {
                 [
                   userIdMap[form.user_id_3] && userIdMap[form.user_id_3].name,
                   userIdMap[form.user_id_4] && userIdMap[form.user_id_4].name
-                ].filter((has)=>{return has}).join('、')
+                ].filter((has)=>{return has}).join('、') || '(無球員)'
               }
               <TextField fullWidth variant="filled" size="small" type="number"
                         onChange={handleChange} onKeyDown={handleKeyDown} 
                         label="隊伍2比數" name="point_34" value={form.point_34}/>
             </Grid>
-            <Grid size={{xs:12, sm:6}}>
+            <Grid size={{xs:12}}><Divider sx={{marginBottom:'1rem'}}/></Grid>
+            <Grid size={{xs:12}}>
               <TextField fullWidth variant="filled" size="small" type="number"
                         onChange={handleChange} onKeyDown={handleKeyDown} 
                         label="比賽用時(秒)" name="duration" value={form.duration}/>

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Button, Drawer, Grid} from '@mui/material';
+import {Button, Grid} from '@mui/material';
 import {Box, Divider,} from '@mui/material';
 import {Card, CardContent,Typography} from '@mui/material';
 import { grey } from '@mui/material/colors';
@@ -14,7 +14,6 @@ export type MyChildRef = { // 子暴露方法給父
 };
 type MyChildProps = { // 父傳方法給子
   updateBodyBlock: (status) => void;
-  open: boolean;
   onClose: () => void;
   users?:UserType[];
   doSelectUser?: (userIdx:number) => void;
@@ -28,7 +27,7 @@ type MyChildProps = { // 父傳方法給子
 };
 
 const UserPanel = React.forwardRef<MyChildRef, MyChildProps>((
-  { updateBodyBlock, open, onClose, users=[], 
+  { updateBodyBlock, onClose, users=[], 
     doSelectUser, setUserShowUp, setUserLeave, userIdxMatch=[], userIdxMatchCode={}, userIdxPrepare=[],
     setUserModel, setUserDrawer,
   }, ref
@@ -42,9 +41,7 @@ const UserPanel = React.forwardRef<MyChildRef, MyChildProps>((
     }
   };
 
-  return (
-    <Drawer anchor="bottom" open={open} hideBackdrop variant={'persistent'}
-            sx={{maxHeight:'70vh', top:'unset', bottom:0}}>
+  return (<>
       <Box padding={'5px'}>
         <Button size='small' sx={{mr:'1rem'}} onClick={()=>{if(setUserShowUp){setUserShowUp(-1)}}}>
           全部報到 <EmojiPeopleIcon/>
@@ -88,7 +85,6 @@ const UserPanel = React.forwardRef<MyChildRef, MyChildProps>((
           ))}
         </Grid>
       </Box>
-    </Drawer>
-  );
+  </>);
 })
 export default UserPanel;

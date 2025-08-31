@@ -28,7 +28,6 @@ import CourtModel, {MyChildRef as CourtModelMyChildRef} from '../components/Mode
 import TableMatchs, {
   MyChildRef as TableMatchsMyChildRef, empty_searchForm as emptyMatchSearchForm
 } from '../components/TableMatchs.tsx';
-import MatchModel, {MyChildRef as MatchModelMyChildRef} from '../components/Model/MatchModel';
 
 import {Dialog,DialogActions,DialogContent,DialogContentText,DialogTitle} from '@mui/material';
 import { FormHelperText } from '@mui/material';
@@ -55,10 +54,8 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
 
   const [initFinished, setInitFinished] = React.useState(false);
   const [courts, setCourts] = React.useState<any[]>([]);
-  const [matchs, setMatchs] = React.useState<any[]>([]);
   const [cards, setCards] = React.useState<any[]>([]);
   const [reservations, setReservations] = React.useState<any[]>([]);
-  const [user_map, setUserMap] = React.useState<any>({});
 
   React.useEffect(() => {
     (async () => {
@@ -73,8 +70,7 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
           return;
         }
         setCourts(result.courts);
-        setUserMap(result.user_map);
-        setMatchs(result.matchs);
+        TableMatchsRef.current?.setPlayMatchs(result);
         setCards([result.play_date]);
         setReservations(result.reservations);
         TableUsersRef.current?.showRows(result.reservations);
@@ -99,17 +95,6 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   const handleTabChange = (event: React.SyntheticEvent, newTabValue: string) => {
     setTabValue(newTabValue);
   };
-  React.useEffect(() => {
-    if (tabValue === 'tab1' && TableUsersRef.current) {
-      TableUsersRef.current?.showRows(reservations);
-    }
-    else if(tabValue === 'tab2' && TableCourtsRef.current){
-      TableCourtsRef.current?.showRows(courts);
-    }
-    else if(tabValue === 'tab3' && TableMatchsRef.current){
-      TableMatchsRef.current?.showRows(matchs);
-    }
-  }, [tabValue]);
 
   const [batchUserText, setBatchUserText] = React.useState("");
   const [batchAddModelStatus, setbatchAddModelStatus] = React.useState(false);
@@ -288,68 +273,6 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   }
 
   const TableMatchsRef = React.useRef<TableMatchsMyChildRef>(null);
-  const getMatchs = async(where:any={}) => {
-    TableMatchsRef.current?.showRows([]);
-    try {
-      let result = await functions.fetchData('GET', 'matchs', null, where);
-      setUserMap(result.user_map);
-      setMatchs(result.data);
-      TableMatchsRef.current?.resetSelect();
-      TableMatchsRef.current?.setUserMap(result.user_map);
-      TableMatchsRef.current?.showRows(result.data);
-    } catch (error) {
-      // console.error('Error fetching data:', error);
-      showMessage('取得比賽紀錄資料發生錯誤', 'error');
-    }
-  }
-  const deleteSelectedMatchIds = async ()=>{
-    let selectedIds = TableMatchsRef.current?.getSelectedIds();
-    console.log(selectedIds);
-    if(selectedIds?.length==0){
-      showMessage('請勾選刪除項目', 'error');return;
-    }
-    const do_function = async():Promise<boolean> => {
-      updateBodyBlock(true);
-      let modelStatus = true;
-      try {
-        let result = await functions.fetchData('DELETE', 'matchs', null, {ids:selectedIds});
-        if(result.msg){
-          showMessage(result.msg, 'error');
-        }else{
-          modelStatus = false;
-          TableMatchsRef.current?.goSearch();
-        }
-      } catch (error) {
-        // console.error('Error fetching data:', error);
-        showMessage('刪除比賽紀錄發生錯誤', 'error');
-      }
-      updateBodyBlock(false);
-      return modelStatus;
-    }
-    showConfirmModelStatus(
-      `確認刪除？`,
-      `即將刪除勾選的【`+ selectedIds?.length + `】個比賽紀錄，確認執行嗎？`,
-      '確認',
-      do_function
-    );
-  }
-  const clickTableMatchs = (idx:number, item:any) => {
-    // console.log(item);
-    if(idx<0 && idx>=matchs.length){ return; }
-    MatchModelRef.current?.setUserMap(user_map);
-    MatchModelRef.current?.setModel(idx, item); // 呼叫 child 的方法
-  }
-
-  const MatchModelRef = React.useRef<MatchModelMyChildRef>(null);
-  const reGetListMatchs = async () => {
-    TableMatchsRef.current?.goSearch();
-  }
-  const renewListMatchs = async (idx, item)=>{
-    item['duration'] = Number(item['duration']);
-    matchs[idx] = {...matchs[idx], ...item};
-    setMatchs(matchs);
-    TableMatchsRef.current?.showRows(matchs);
-  }
 
   return (   
     <>
@@ -405,7 +328,7 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
         </Tabs>
       </Box>
       <TabContext value={tabValue}>
-        <TabPanel value="tab1">
+        <TabPanel value="tab1" keepMounted>
           <Typography variant='h6' textAlign="left">報名紀錄</Typography>
           <Grid container spacing={0} sx={{mb:'1rem'}}>
             <Grid size={{xs:12, sm:11}}>
@@ -435,7 +358,7 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
             </Button>
           </Box>
         </TabPanel>
-        <TabPanel value="tab2">
+        <TabPanel value="tab2" keepMounted>
           <Typography variant='h6' textAlign="left" gutterBottom>
             <Box sx={{marginRight: '1rem', display:'inline-block'}}>場地記錄</Box>
             <Fab size="small" color="secondary" aria-label="add"
@@ -456,21 +379,13 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
             </Button>
           </Box>
         </TabPanel>
-        <TabPanel value="tab3">
+        <TabPanel value="tab3" keepMounted>
           <Typography variant='h6' textAlign="left" gutterBottom>比賽記錄</Typography>
-          <TableMatchs updateBodyBlock={updateBodyBlock}
-                            getData={getMatchs}
-                            clickFirstCell={clickTableMatchs}
-                            where={defaulMatchWhere}
-                            numPerPage={0}
-                            needCheckBox={true}
-                            userMap={user_map}
-                            ref={TableMatchsRef}/>
-          <Box textAlign="left" sx={{mt:'1rem'}}>
-            <Button size="small" variant="contained" color='error' onClick={deleteSelectedMatchIds}>
-              <DeleteForeverIcon />
-            </Button>
-          </Box>
+          <TableMatchs updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}
+                      where={defaulMatchWhere}
+                      numPerPage={0}
+                      needCheckBox={true}
+                      ref={TableMatchsRef}/>
         </TabPanel>
       </TabContext>
 
@@ -484,11 +399,6 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
                   reGetList={reGetListCourts}
                   renewList={renewListCourts}
                   ref={CourtModelRef} />
-      <MatchModel updateBodyBlock={updateBodyBlock}
-                  reGetList={reGetListMatchs}
-                  renewList={renewListMatchs}
-                  userMap={user_map}
-                  ref={MatchModelRef} />
       <React.Fragment>
         <Dialog
           open={batchAddModelStatus}

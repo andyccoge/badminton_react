@@ -1,4 +1,7 @@
+import * as functions from '../functions.tsx'
 import * as React from 'react';
+import { useSnackbar } from 'notistack';
+
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -10,13 +13,16 @@ import TableRow from '@mui/material/TableRow';
 import Checkbox from '@mui/material/Checkbox';
 
 import SearchIcon from '@mui/icons-material/Search';
-import {Button} from '@mui/material';
+import AutorenewIcon from '@mui/icons-material/Autorenew';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import {Box, Button} from '@mui/material';
+import { Link } from 'react-router-dom';
 
-import * as functions from '../functions.tsx'
 
 import SearchFormModel, {
   MyChildRef as SearchFormModelMyChildRef
 } from '../components/Model/SearchFormModel';
+import MatchModel, {MyChildRef as MatchModelMyChildRef} from '../components/Model/MatchModel';
 
 interface SearchForm {
   ids: any[];
@@ -37,16 +43,16 @@ interface Column {
   id: 'user_id_1' | 'user_id_2' | 'point_12' | 'point_34' | 'user_id_3' | 'user_id_4' | 'duration';
   label: string;
   minWidth?: number;
-  align?: 'right';
+  align?: 'right' | 'left' | 'center';
   format?: (value: number) => string;
 }
 
 export interface Data {
   id:number,
-  user_id_1:number,
-  user_id_2:number,
-  user_id_3:number,
-  user_id_4:number,
+  user_id_1:number | null,
+  user_id_2:number | null,
+  user_id_3:number | null,
+  user_id_4:number | null,
   play_date_id:number,
   court_id:number,
   point_12:number,
@@ -56,69 +62,70 @@ export interface Data {
 
 
 export type MyChildRef = { // 子暴露方法給父
+  setPlayMatchs:(result:{matchs:Data[]; user_map:any}) => void;
   showRows: (items:Array<Data>) => void;
+  getRows: () => Array<Data>;
   getSelectedIds: () => readonly number[];
   resetSelect: () => void;
   goSearch: () => void;
-  setUserMap:(map:any) => void;
 };
 type MyChildProps = { // 父傳方法給
   updateBodyBlock: (status) => void;
-  getData: (where:any) => void;
-  clickFirstCell:(idx:number, item:any) => void;
+  showConfirmModelStatus: (
+    title: string,
+    message: string,
+    do_function_name?: string,
+    do_function?: ()=> Promise<boolean>,
+  ) => void;
   countTotal?: number;
   where?: {},
   numPerPage?: number,
   needSearch?: boolean,
   needCheckBox?: boolean,
   needTool?: boolean,
-  userMap?: any,
 };
 function TableMatchs(
   { 
-    updateBodyBlock, getData, clickFirstCell, where={}, countTotal=0, 
-    numPerPage=10, needSearch=true, needCheckBox=false, needTool=false, userMap={}
+    updateBodyBlock, showConfirmModelStatus, where={}, countTotal=0, 
+    numPerPage=10, needSearch=true, needCheckBox=false, needTool=false,
   }: MyChildProps,
   ref: React.Ref<MyChildRef>
 ) {
+  const { enqueueSnackbar } = useSnackbar();
+  const showMessage = functions.createEnqueueSnackbar(enqueueSnackbar);
+
   React.useImperativeHandle(ref, () => ({
-    showRows: (items:Array<Data>) => {
-      // console.log(items);
-      items = items.map((row) => {
-        /*處理資料*/
-        return row;
-      })
-      setRows(items)
-    },
+    showRows: (items:Array<Data>) => { showRows(items); },
+    getRows: () => { return rows; },
     getSelectedIds: ():readonly number[] => {
       return selected;
     },
-    resetSelect: () => {
-      setSelected([]);
-    },
+    resetSelect: () => { setSelected([]); },
     goSearch: async() => { await goSearch(); },
-    setUserMap:(map) => { setUserIdMap(map); },
+    setPlayMatchs:(result:{matchs:Data[]; user_map:any}) => {
+      setUserIdMap({ ...userIdMap, ...result.user_map});
+      showRows(result.matchs);
+    }
   }));
 
-  const [userIdMap, setUserIdMap] = React.useState<any>(userMap)
+  const [userIdMap, setUserIdMap] = React.useState<any>({})
   const columns: Column[] = [
-    { id: 'user_id_1', label: '球員1', minWidth: 100, 
-      format: (value: number) => userIdMap[value].name 
+    { id: 'user_id_1', label: '球員1', minWidth: 100, align:'center',
+      format: (value: number) => userIdMap[value].name
     },
-    { id: 'user_id_2', label: '球員2', minWidth: 100, 
-      format: (value: number) => userIdMap[value].name 
+    { id: 'user_id_2', label: '球員2', minWidth: 100, align:'center',
+      format: (value: number) => userIdMap[value].name
     },
-    { id: 'point_12', label: '比數1', minWidth: 100 },
-    { id: 'point_34', label: '比數2', minWidth: 100 },
-    { id: 'user_id_3', label: '球員3', minWidth: 100, 
-      format: (value: number) => userIdMap[value].name 
+    { id: 'point_12', label: '比數1', minWidth: 100, align:'center',},
+    { id: 'point_34', label: '比數2', minWidth: 100, align:'center',},
+    { id: 'user_id_3', label: '球員3', minWidth: 100, align:'center',
+      format: (value: number) => userIdMap[value].name
     },
-    { id: 'user_id_4', label: '球員4', minWidth: 100, 
-      format: (value: number) => userIdMap[value].name 
+    { id: 'user_id_4', label: '球員4', minWidth: 100, align:'center',
+      format: (value: number) => userIdMap[value].name
     },
-    { id: 'duration', label: '比賽用時', minWidth: 100,
+    { id: 'duration', label: '比賽用時', minWidth: 100, align:'right',
       format: (value: number) => functions.formatSeconds(value),
-      align: 'right',
     },
   ];
 
@@ -171,6 +178,26 @@ function TableMatchs(
   };
 
   const SearchFormModelRef = React.useRef<SearchFormModelMyChildRef>(null);
+  const showRows = (items:Array<Data>) => {
+    // console.log(items);
+    items = items.map((row) => {
+      /*處理資料*/
+      return row;
+    })
+    setRows(items)
+  }
+  const getData = async(where:any={}) => {
+    try {
+      let result = await functions.fetchData('GET', 'matchs', null, where);
+      setSelected([]);
+      setUserIdMap({ ...userIdMap, ...result.user_map});
+      showRows(result.data);
+    } catch (error) {
+      // console.error('Error fetching data:', error);
+      showMessage('取得比賽紀錄資料發生錯誤', 'error');
+    }
+  }
+
   const goSearch = async () =>{
     updateBodyBlock(true);
     await setRows([]);
@@ -181,12 +208,61 @@ function TableMatchs(
     await getData(tempSerchform);
     updateBodyBlock(false);
   }
+  const clickTableMatchs = (idx:number, item:any) => {
+    // console.log(item);
+    if(idx<0 && idx>=rows.length){ return; }
+    MatchModelRef.current?.setUserMap(userIdMap);
+    MatchModelRef.current?.setModel(idx, item); // 呼叫 child 的方法
+  }
+  const deleteSelectedMatchIds = async ()=>{
+    let selectedIds = selected;
+    // console.log(selectedIds);
+    if(selectedIds?.length==0){
+      showMessage('請勾選刪除項目', 'error');return;
+    }
+    const do_function = async():Promise<boolean> => {
+      updateBodyBlock(true);
+      let modelStatus = true;
+      try {
+        let result = await functions.fetchData('DELETE', 'matchs', null, {ids:selectedIds});
+        if(result.msg){
+          showMessage(result.msg, 'error');
+        }else{
+          modelStatus = false;
+          await goSearch();
+        }
+      } catch (error) {
+        // console.error('Error fetching data:', error);
+        showMessage('刪除比賽紀錄發生錯誤', 'error');
+      }
+      updateBodyBlock(false);
+      return modelStatus;
+    }
+    showConfirmModelStatus(
+      `確認刪除？`,
+      `即將刪除勾選的【`+ selectedIds?.length + `】個比賽紀錄，確認執行嗎？`,
+      '確認',
+      do_function
+    );
+  }
+
+  const MatchModelRef = React.useRef<MatchModelMyChildRef>(null);
+  const renewListMatchs = async (idx, item)=>{
+    item['duration'] = Number(item['duration']);
+    rows[idx] = {...rows[idx], ...item};
+    showRows(rows);
+  }
 
   return (<>
     {needSearch && <>
       <Button size="small" sx={{mr:'1rem',alignSelf:'center'}} 
               onClick={()=>{SearchFormModelRef.current?.setFormModel(true)}}>
         搜尋設定<SearchIcon />
+      </Button>
+
+      <Button size="small" sx={{alignSelf:'center'}} variant="text" color="info"
+              onClick={()=>{goSearch()}}>
+        <AutorenewIcon color={'inherit'} fontSize={'small'} className='cursor-pointer' />
       </Button>
       <Button size="small" sx={{alignSelf:'center'}} variant="text" color="info" 
               onClick={()=>{SearchFormModelRef.current?.cleanSearch()}}>
@@ -201,14 +277,14 @@ function TableMatchs(
     </>}
     <Paper sx={{ width: '100%' }}>
       <TableContainer sx={{ maxHeight: 440 }}>
-        <Table stickyHeader aria-label="sticky table">
+        <Table stickyHeader aria-label="sticky table" sx={{ borderCollapse: 'collapse' }}>
           <TableHead>
             <TableRow>
-              <TableCell align="center" colSpan={1}></TableCell>
-              <TableCell align="center" colSpan={2}>隊伍1</TableCell>
-              <TableCell align="center" colSpan={2}>比數</TableCell>
-              <TableCell align="center" colSpan={2}>隊伍2</TableCell>
-              <TableCell align="center" colSpan={1}></TableCell>
+              <TableCell align="center" colSpan={1} sx={{ border: '1px solid #E0E0E0' }}></TableCell>
+              <TableCell align="center" colSpan={2} sx={{ border: '1px solid #E0E0E0' }}>隊伍1</TableCell>
+              <TableCell align="center" colSpan={2} sx={{ border: '1px solid #E0E0E0' }}>比數</TableCell>
+              <TableCell align="center" colSpan={2} sx={{ border: '1px solid #E0E0E0' }}>隊伍2</TableCell>
+              <TableCell align="center" colSpan={1} sx={{ border: '1px solid #E0E0E0' }}></TableCell>
             </TableRow>
             <TableRow>
               {needCheckBox &&
@@ -256,19 +332,12 @@ function TableMatchs(
                     {columns.map((column, index) => {
                       const value = row[column.id];
                       return (
-                        <TableCell key={column.id} align={column.align}>
-                          {index==0 && <>
-                            <Button color="info" onClick={()=>{clickFirstCell(idx, row)}} sx={{p:0, display:'align', justifyContent:'start'}}>
-                              {column.format && typeof value === 'number'
-                              ? column.format(value)
-                              : value}
-                            </Button>
-                          </>}
-                          {index!=0 && <>
+                        <TableCell key={column.id} align={column.align} onClick={()=>{clickTableMatchs(idx, row)}}>
+                          {<Link to="#" style={{color: '#0288d1'}}>
                             {column.format && typeof value === 'number'
                             ? column.format(value)
                             : value}
-                          </>}
+                          </Link>}
                         </TableCell>
                       );
                     })}
@@ -290,6 +359,16 @@ function TableMatchs(
         labelDisplayedRows={({ from, to, count })=>{ return `${from}–${to} / ${count !== -1 ? count : `超過 ${to}`}`; }}
       />
     </Paper>
+    <Box textAlign="left" sx={{mt:'1rem'}}>
+      <Button size="small" variant="contained" color='error' onClick={deleteSelectedMatchIds}>
+        <DeleteForeverIcon />
+      </Button>
+    </Box>
+
+    <MatchModel updateBodyBlock={updateBodyBlock}
+              reGetList={()=>{goSearch()}}
+              renewList={renewListMatchs}
+              ref={MatchModelRef} />
   </>);
 }
 export default React.forwardRef<MyChildRef, MyChildProps>(TableMatchs);
