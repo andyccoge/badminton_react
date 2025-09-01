@@ -28,14 +28,15 @@ type MyChildProps = { // 父傳方法給
   updateBodyBlock: (status) => void;
   court_idx: number,
   courts: CourtType[],
+  clickCourt: (idx:number) => void;
   users:ReservationsType[],
   clickUserName: (refIdx:number) => void;
   vertical?: boolean,
   userIdxMatch: number[];
   userIdxMatchCode: {};
-  setUserIdxPrepare?: (items:any) => void;
   setCourts?: (items:any) => void;
   updateUserIdxMatchCode?: (exclude:number[], include:number[], includeCourt:string) => number[];
+  updateUserIdxPrepare?: (excludeCourtIndex:number, include?:number[]) => number[];
   setUsers?: (items:any) => void;
   setUserShowUp?: (idx:number) => void;
   setUserLeave?: (idx:number) => void;
@@ -46,9 +47,9 @@ type MyChildProps = { // 父傳方法給
 
 function Court(
   { 
-    updateBodyBlock, court_idx, courts, users,
-    clickUserName, vertical=false,
-    userIdxMatch, userIdxMatchCode, setUserIdxPrepare, setCourts, updateUserIdxMatchCode, 
+    updateBodyBlock, court_idx, courts, clickCourt,
+    users, clickUserName, vertical=false,
+    userIdxMatch, userIdxMatchCode, setCourts, updateUserIdxMatchCode, updateUserIdxPrepare,
     setUsers, setUserShowUp, setUserLeave,
     setUserModel, setUserDrawer, addMatchs,
   }: MyChildProps,
@@ -68,10 +69,6 @@ function Court(
         top: top - 16, // 1rem ≈ 16px
         behavior: "smooth",
       });
-      // rootRef.current?.scrollIntoView({
-      //   behavior: "smooth",
-      //   block: "start",
-      // });
     }
   }));
 
@@ -124,22 +121,8 @@ function Court(
     /*設定場地球員(上場&更新秒數為0)*/
     if(setCourts){
       setCourts(prev => {
-        // 拿出 nextCourtIdx 之前的 type==2 且非 [-1,-1,-1,-1]
-        const preserved = nextCourtIdx>=0 ? prev
-          .slice(0, nextCourtIdx)
-          .filter(cc => cc.type === 2 && !isEmptyIdx(cc.usersIdx))
-          .map(cc => cc.usersIdx) : [];
-
-        // 拿出 nextCourtIdx 之後的 type==2 場次的 idx
-        const toShift = prev
-          .slice(nextCourtIdx+1)
-          .filter(cc => cc.type === 2 && !isEmptyIdx(cc.usersIdx))
-          .map(cc => cc.usersIdx);
-
-        // 合併要放回的 idxs，後面不足補 [-1,-1,-1,-1]
-        const newIdxList = [...preserved, ...toShift];
-        // console.log(newIdxList);
-        if(setUserIdxPrepare){ setUserIdxPrepare(newIdxList.flat().filter(cc => cc!=-1)); }
+        /*更新預備球員紀錄*/
+        const newIdxList = updateUserIdxPrepare ? updateUserIdxPrepare(nextCourtIdx) : [];
 
         let shiftPointer = 0;
         return prev.map((ee,eeid) => {
@@ -286,7 +269,7 @@ function Court(
                 <Typography sx={{pr:vertical?'0.5rem':0,}}>
                   {court && court.code}
                 </Typography>
-                <EditSquareIcon />
+                <EditSquareIcon className='cursor-pointer' onClick={()=>clickCourt(court_idx)}/>
               </Stack>
             </Grid>
             <Grid size={vertical?{xs:12}:{ xs: 4, md:5}}>

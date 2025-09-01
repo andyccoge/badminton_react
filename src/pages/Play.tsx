@@ -11,6 +11,7 @@ import BottomNavigation, {MyChildRef as BottomNavigationMyChildRef} from '../com
 import Court, {MyChildRef as CourtMyChildRef} from '../components/Court';
 import UserModel, {MyChildRef as UserModelMyChildRef} from '../components/Model/UserModel';
 import ReservationDrawer, {MyChildRef as ReservationDrawerMyChildRef} from '../components/ReservationDrawer';
+import { Data as CourtData } from '../components/TableCourts.tsx';
 import { Data as MatchData } from '../components/TableMatchs.tsx';
 
 const vertical=true; /* true false */
@@ -37,19 +38,28 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const play_date_id:string | null = searchParams.get('id') || '0';
-  // defaulUsertWhere['play_date_id'] = play_date_id;
-  // defaulCourtWhere['play_date_id'] = play_date_id;
-  // defaulMatchWhere['play_date_id'] = play_date_id;
 
   const [initFinished, setInitFinished] = React.useState(false);
   const [courts, setCourts] = React.useState<any[]>([]);
   const [cards, setCards] = React.useState<any[]>([]);
   const [reservations, setReservations] = React.useState<any[]>([]);
 
-  /*在比賽場中的球員idx(有紀錄表示在場上)*/
+  /*在比賽場中的球員idx(有紀錄表示在比賽中)*/
   const [userIdxMatch, setUserIdxMatch] = React.useState<number[]>([]);
-  const [userIdxPrepare, setUserIdxPrepare] = React.useState<number[]>([]);
+  /*在比賽場中的球員idx對應所在場地編號(有在比賽中就應有紀錄)*/
   const [userIdxMatchCode, setUserIdxMatchCode] = React.useState<any>({});
+  /*在預備場中的球員idx(有紀錄表示在預備中)*/
+  const [userIdxPrepare, setUserIdxPrepare] = React.useState<number[]>([]);
+  const [selectedCourtIdx, setSelectedCourtIdx] = React.useState<number>(-1);
+  const [selectedNameIdx, setSelectedNameIdx] = React.useState<number>(-1);
+
+  const setPlayUsers = (users:any[], Oris:any[]=[]) => {
+    users = users.map((item)=>{ return initCourtUser(item); })
+    setReservations(users);
+  }
+  const setPlayCourts = (courts:any[]) => {
+    setCourts(courts.map((item)=>{ return initCourt(item); }));
+  }
   const updateUserIdxMatchCode = (exclude:number[]=[], include:number[]=[], includeCourt:string='') => {
     exclude = exclude.filter((yy)=>(yy!=-1));
     include = include.filter((yy)=>(yy!=-1));
@@ -70,16 +80,22 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
     setUserIdxMatch(newUserIdxMatch);
     return newUserIdxMatch;
   };
-
-  const [selectedCourtIdx, setSelectedCourtIdx] = React.useState<number>(-1);
-  const [selectedNameIdx, setSelectedNameIdx] = React.useState<number>(-1);
-
-  const setPlayUsers = (users:any[], Oris:any[]=[]) => {
-    users = users.map((item)=>{ return initCourtUser(item); })
-    setReservations(users);
-  }
-  const setPlayCourts = (courts:any[]) => {
-    setCourts(courts.map((item)=>{ return initCourt(item); }));
+  const updateUserIdxPrepare = (excludeCourtIndex:number, include:number[]=[]):number[] => {
+    // 拿出 要排除場地(excludeCourtIndex) 之前的 type==2 的場地的設定球員idx
+    const preserved = excludeCourtIndex>=0 ? courts
+          .slice(0, excludeCourtIndex)
+          .filter(cc => cc.type === 2)
+          .map(cc => cc.usersIdx) : [];
+    // 拿出 要排除場地(excludeCourtIndex) 之後的 type==2 的場地的設定球員idx
+    const toShift = courts
+      .slice(excludeCourtIndex+1)
+      .filter(cc => cc.type === 2)
+      .map(cc => cc.usersIdx);
+    // 合併要放回的 idxs
+    const newIdxList = [...preserved, ...toShift].flat().filter(cc => cc!=-1).concat(include);
+    /*排除-1、添加新預備球員，並設定新預備球員紀錄*/
+    setUserIdxPrepare(newIdxList);
+    return newIdxList;
   }
 
   React.useEffect(() => {
@@ -98,6 +114,7 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
         setCards([result.play_date]);
         setPlayUsers(result.reservations);
         setPlayCourts(result.courts);
+        BottomNavigationRef.current?.setCourts(result.courts);
         BottomNavigationRef.current?.setPlayMatchs(result);
         // TableUsersRef.current?.showRows(result.reservations);
       } catch (error) {
@@ -120,19 +137,6 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
     updateBodyBlock(false);
   }
 
-  const CourtRefs = React.useRef<Array<React.RefObject<CourtMyChildRef | null>>>([]);
-  const handleCourtRefs = (index: number) => (el: CourtMyChildRef | null) => {
-    if (el) {
-      CourtRefs.current[index] = { current: el };
-    } else {
-      CourtRefs.current[index] = { current: null };
-    }
-  };
-  const addMatchs = (newMatch:MatchData) => {
-    const matchs = BottomNavigationRef.current?.getMatchs() ?? [];
-    matchs.push(newMatch);
-    BottomNavigationRef.current?.showMatchs(matchs);
-  }
   const cleanSeletedCourtName = () => {
     const selectedCourt = CourtRefs?.current[selectedCourtIdx];
     if(!selectedCourt){ return; }
@@ -143,48 +147,6 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
     setSelectedCourtIdx(-1);
     setSelectedNameIdx(-1);
   }
-  const clickCourtUserName = (courtIdx:number) => {
-    const clickUserName = (refIdx) => {
-      const tempRef = CourtRefs?.current[courtIdx];
-      const NameRefs = tempRef?.current?.getUserNameCards();
-      const NameRef = NameRefs?.[refIdx].current;
-      const oriStatus = NameRef?.getSelectedStatus();
-      cleanSeletedCourtName();
-      if(oriStatus==false){
-        NameRef?.setSelectedStatus(true);
-        setSelectedCourtIdx(courtIdx);
-        setSelectedNameIdx(refIdx);
-        // 捲動到該場地
-        tempRef.current?.scrollToSelf();
-        BottomNavigationRef.current?.setUserPanelDrawerOpen(true);
-      }
-    }
-    return clickUserName
-  }
-
-  const BottomNavigationRef = React.useRef<BottomNavigationMyChildRef>(null);
-  const doSelectUser = async(userIdx:number) => {
-    let result = setCourtUser(selectedCourtIdx, selectedNameIdx, userIdx);
-    if(result){
-      const usersIdx = courts[selectedCourtIdx].usersIdx;
-      const nextIdx = usersIdx.indexOf(-1);
-      const nameRefs = CourtRefs?.current[selectedCourtIdx].current?.getUserNameCards();
-      if(nameRefs){
-        nameRefs[selectedNameIdx].current?.setSelectedStatus(false);
-        if(nextIdx!=-1){ /*場地還有空位代設定球員*/
-            nameRefs[nextIdx].current?.setSelectedStatus(true);
-            // 捲動到該場地
-            CourtRefs?.current[selectedCourtIdx].current?.scrollToSelf();
-            setSelectedNameIdx(nextIdx);
-        }else{
-          await setSelectedCourtIdx(-1);
-          await setSelectedNameIdx(-1);
-          BottomNavigationRef.current?.setUserPanelDrawerOpen(false);
-        }
-      }
-    }
-  }
-
   const setCourtUser = (courtIdx:number, nameIdx:number, userIdx:number):boolean => {
     if(courtIdx<0 || nameIdx<0){ 
       showMessage('未設定上場位置', 'warning'); return false;
@@ -227,19 +189,10 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
     if(courts[courtIdx].type==1){
       updateUserIdxMatchCode([oriUserIdx], [userIdx], courts[courtIdx].code);
     }else{
-      /*排除原本在準備的idx*/
-      const tempUserIdxs = userIdxPrepare.filter(item => item !== oriUserIdx);
-      if(userIdx!=-1){
-        /*添加新上場的idx*/
-        tempUserIdxs.push(userIdx);
-      }
-      setUserIdxPrepare(tempUserIdxs);
+      updateUserIdxPrepare(courtIdx, usersIdx);
     }
     return true;
   }
-
-  const setUserShowUp = async(idx:number) => { await setUserShowUpOrLeave(idx, 1); }
-  const setUserLeave = async(idx:number) => { await setUserShowUpOrLeave(idx, 0); }
   const setUserShowUpOrLeave = async(idx:number, status:number) => {
     updateBodyBlock(true); //顯示遮蓋
     setReservations(prev =>
@@ -262,6 +215,101 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
     updateBodyBlock(false); //隱藏遮蓋
   }
 
+  const CourtRefs = React.useRef<Array<React.RefObject<CourtMyChildRef | null>>>([]);
+  const handleCourtRefs = (index: number) => (el: CourtMyChildRef | null) => {
+    if (el) {
+      CourtRefs.current[index] = { current: el };
+    } else {
+      CourtRefs.current[index] = { current: null };
+    }
+  };
+  const clickCourt = (courtIdx:number) => {
+    BottomNavigationRef.current?.setCourtsModel(courtIdx, courts[courtIdx]);
+  }
+  const clickCourtUserName = (courtIdx:number) => {
+    const clickUserName = (refIdx) => {
+      const tempRef = CourtRefs?.current[courtIdx];
+      const NameRefs = tempRef?.current?.getUserNameCards();
+      const NameRef = NameRefs?.[refIdx].current;
+      const oriStatus = NameRef?.getSelectedStatus();
+      cleanSeletedCourtName();
+      if(oriStatus==false){
+        NameRef?.setSelectedStatus(true);
+        setSelectedCourtIdx(courtIdx);
+        setSelectedNameIdx(refIdx);
+        // 捲動到該場地
+        tempRef.current?.scrollToSelf();
+        BottomNavigationRef.current?.setUserPanelDrawerOpen(true);
+      }
+    }
+    return clickUserName
+  }
+  const setUserShowUp = async(idx:number) => { await setUserShowUpOrLeave(idx, 1); }
+  const setUserLeave = async(idx:number) => { await setUserShowUpOrLeave(idx, 0); }
+  const setUserModel = (idx, item) => {
+    UserModelRef.current?.setModel(idx, item, 'user_id');
+  }
+  const setUserDrawer = (idx, item) => {
+    ReservationDrawerRef.current?.setModel(idx, item);
+  }
+  const addMatchs = (newMatch:MatchData) => {
+    const matchs = BottomNavigationRef.current?.getMatchs() ?? [];
+    matchs.push(newMatch);
+    BottomNavigationRef.current?.showMatchs(matchs);
+  }
+
+  const BottomNavigationRef = React.useRef<BottomNavigationMyChildRef>(null);
+  const doSelectUser = async(userIdx:number) => {
+    let result = setCourtUser(selectedCourtIdx, selectedNameIdx, userIdx);
+    if(result){
+      const usersIdx = courts[selectedCourtIdx].usersIdx;
+      const nextIdx = usersIdx.indexOf(-1);
+      const nameRefs = CourtRefs?.current[selectedCourtIdx].current?.getUserNameCards();
+      if(nameRefs){
+        nameRefs[selectedNameIdx].current?.setSelectedStatus(false);
+        if(nextIdx!=-1){ /*場地還有空位代設定球員*/
+            nameRefs[nextIdx].current?.setSelectedStatus(true);
+            // 捲動到該場地
+            CourtRefs?.current[selectedCourtIdx].current?.scrollToSelf();
+            setSelectedNameIdx(nextIdx);
+        }else{
+          await setSelectedCourtIdx(-1);
+          await setSelectedNameIdx(-1);
+          BottomNavigationRef.current?.setUserPanelDrawerOpen(false);
+        }
+      }
+    }
+  }
+  const renewCourts = (items:CourtData[]) => {
+    items = items.map((item, idx)=>{
+      if(idx>=courts.length){ item = initCourt(item); }
+      else{ item = {...courts[idx], ...item}; }
+      return item;
+    });
+    setCourts(items);
+  };
+  const renewCourt = (idx:number, item:CourtData) => {
+    if(courts[idx].type==1 && item.type==2){ /*從比賽轉預備*/
+      updateUserIdxMatchCode(courts[idx].usersIdx); /*從比賽場中排除*/
+      updateUserIdxPrepare(-1, courts[idx].usersIdx); /*添加至預備場中*/
+    }else if(courts[idx].type==2 && item.type==1){ /*從預備轉比賽*/
+      updateUserIdxMatchCode([], courts[idx].usersIdx, item.code); /*添加至比賽場中*/
+      updateUserIdxPrepare(idx); /*從預備場中排除*/
+    }
+    courts[idx] = {...courts[idx], ...item}
+    setCourts(courts);
+  }
+  const checkCourtsEditable = (idx:number, item:CourtData):string => {
+    if(courts[idx].type==2 && item.type==1){ /*從預備轉比賽*/
+      const setB = new Set(courts[idx].usersIdx);
+      const hasIntersection = userIdxMatch.some(num => setB.has(num));
+      if(hasIntersection){
+        return '有球員已在比賽場上，無法修改';
+      }
+    }
+    return '';
+  }
+
   const UserModelRef = React.useRef<UserModelMyChildRef>(null);
   const reGetListUsers = async () => {
     await goSearchReservations();
@@ -270,18 +318,15 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
     reservations[idx] = {...reservations[idx], ...item};
     setReservations(reservations);
   }
-  const setUserModel = (idx, item) => {
-    UserModelRef.current?.setModel(idx, item, 'user_id');
-  }
 
   const ReservationDrawerRef = React.useRef<ReservationDrawerMyChildRef>(null);
-  const setUserDrawer = (idx, item) => {
-    ReservationDrawerRef.current?.setModel(idx, item);
-  }
 
   return (   
     <>
-      <Button onClick={()=>{console.log(userIdxMatch, userIdxPrepare, userIdxMatchCode,reservations)}}>test</Button>
+      {/* <Button onClick={()=>{
+        // console.log(userIdxMatch, userIdxPrepare, userIdxMatchCode,reservations)
+        // console.log(courts)
+      }}>test</Button> */}
       <Box sx={{pb:'0.5rem'}}></Box>
       {/* 比賽場 */}
       <Grid container spacing={1}>
@@ -293,14 +338,15 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
                 <Court updateBodyBlock={updateBodyBlock}
                       court_idx={court_idx}
                       courts={courts}
+                      clickCourt={clickCourt}
                       users={reservations}
                       clickUserName={clickCourtUserName(court_idx)}
                       vertical={vertical}
                       userIdxMatch={userIdxMatch}
-                      setUserIdxPrepare={setUserIdxPrepare}
                       userIdxMatchCode={userIdxMatchCode}
                       setCourts={setCourts}
                       updateUserIdxMatchCode={updateUserIdxMatchCode}
+                      updateUserIdxPrepare={updateUserIdxPrepare}
                       setUsers={setReservations}
                       setUserShowUp={setUserShowUp}
                       setUserLeave={setUserLeave}
@@ -326,12 +372,13 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
                 <Court updateBodyBlock={updateBodyBlock}
                       court_idx={court_idx}
                       courts={courts}
+                      clickCourt={clickCourt}
                       users={reservations}
                       clickUserName={clickCourtUserName(court_idx)}
                       vertical={vertical}
                       userIdxMatch={userIdxMatch}
-                      setUserIdxPrepare={setUserIdxPrepare}
                       userIdxMatchCode={userIdxMatchCode}
+                      updateUserIdxPrepare={updateUserIdxPrepare}
                       setUserShowUp={setUserShowUp}
                       setUserLeave={setUserLeave}
                       setUserModel={setUserModel}
@@ -373,6 +420,9 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
           userIdxPrepare={userIdxPrepare}
           setUserModel={setUserModel}
           setUserDrawer={setUserDrawer}
+          renewCourts={renewCourts}
+          renewCourt={renewCourt}
+          checkCourtsEditable={checkCourtsEditable}
           ref={BottomNavigationRef}
         />
       </footer>

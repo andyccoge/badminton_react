@@ -1,4 +1,7 @@
+import * as functions from '../functions.tsx'
 import * as React from 'react';
+import { useSnackbar } from 'notistack';
+
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -11,11 +14,13 @@ import Checkbox from '@mui/material/Checkbox';
 
 import SearchIcon from '@mui/icons-material/Search';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
-import {Button} from '@mui/material';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import {Box, Button} from '@mui/material';
 
 import SearchFormModel, {
   MyChildRef as SearchFormModelMyChildRef
 } from '../components/Model/SearchFormModel';
+import CourtModel, {MyChildRef as CourtModelMyChildRef} from '../components/Model/CourtModel';
 
 interface SearchForm {
   ids: any[];
@@ -47,54 +52,64 @@ const columns: Column[] = [
   { id: 'type', label: '類型', minWidth: 100, format: (value: number) => ['', '比賽', '預備'][value] },
 ];
 
-interface Data {
+export interface Data {
   id:number,
   play_date_id:number,
   code:string,
   type:number,
 }
+export interface CourtPlayData extends Data {
+  duration: number;
+  usersIdx: number[];
+}
 
 
 export type MyChildRef = { // 子暴露方法給父
   showRows: (items:Array<Data>) => void;
+  getRows: () => Array<Data>;
   getSelectedIds: () => readonly number[];
   resetSelect: () => void;
   goSearch: () => void;
+  setModel: (idx, item, primaryKey?) => void;
 };
 type MyChildProps = { // 父傳方法給
   updateBodyBlock: (status) => void;
-  getData: (where:any) => void;
-  clickFirstCell:(idx:number, item:any) => void;
-  countTotal?: number;
+  showConfirmModelStatus: (
+    title: string,
+    message: string,
+    do_function_name?: string,
+    do_function?: ()=> Promise<boolean>,
+  ) => void;
   where?: {},
+  countTotal?: number;
   numPerPage?: number,
   needSearch?: boolean,
   needCheckBox?: boolean,
   needTool?: boolean,
+  renewCourts?: (items:Data[]) => void;
+  renewCourt?: (idx:number, item:Data) => void;
+  checkCourtsEditable?: (idx:number, item:Data) => string;
 };
 function TableCourts(
   { 
-    updateBodyBlock, getData, clickFirstCell, where={}, countTotal=0, 
+    updateBodyBlock, showConfirmModelStatus, where={}, countTotal=0, 
     numPerPage=10, needSearch=true, needCheckBox=false, needTool=false,
+    renewCourts, renewCourt, checkCourtsEditable,
   }: MyChildProps,
   ref: React.Ref<MyChildRef>
 ) {
+  const { enqueueSnackbar } = useSnackbar();
+  const showMessage = functions.createEnqueueSnackbar(enqueueSnackbar);
+
   React.useImperativeHandle(ref, () => ({
-    showRows: (items:Array<Data>) => {
-      // console.log(items);
-      items = items.map((row) => {
-        /*處理資料*/
-        return row;
-      })
-      setRows(items)
-    },
-    getSelectedIds: ():readonly number[] => {
-      return selected;
-    },
-    resetSelect: () => {
-      setSelected([]);
-    },
+    showRows: (items:Array<Data>) => { showRows(items); },
+    getRows: () => { return rows; },
+    getSelectedIds: ():readonly number[] => { return selected; },
+    resetSelect: () => { setSelected([]); },
     goSearch: async() => { await goSearch(); },
+    setModel: (idx, item, primaryKey='id') => {
+      CourtModelRef.current?.setModel(idx, item, primaryKey)
+    },
   }));
 
   const [rows, setRows] = React.useState<Array<any>>([]);
@@ -146,26 +161,107 @@ function TableCourts(
   };
 
   const SearchFormModelRef = React.useRef<SearchFormModelMyChildRef>(null);
-  const goSearch = async () =>{
+  const showRows = (items:Array<Data>) => {
+    // console.log(items);
+    items = items.map((row) => {
+      /*處理資料*/
+      return row;
+    })
+    setRows(items)
+  }
+  const getData = async(where:any={}):Promise<{data:Data[]}> => {
+    showRows([]);
+    try {
+      let result = await functions.fetchData('GET', 'courts', null, where);
+      setRows(result.data);
+      setSelected([]);
+      showRows(result.data);
+      return result;
+    } catch (error) {
+      // console.error('Error fetching data:', error);
+      showMessage('取得場地紀錄資料發生錯誤', 'error');
+    }
+    return {data:[],};
+  }
+
+  const goSearch = async():Promise<{data:Data[]}> =>{
     updateBodyBlock(true);
     await setRows([]);
     await setPage(0);
     // await new Promise((resolve) => { setTimeout(() => {resolve(null);}, 100); })
-    let tempSerchform:any = SearchFormModelRef.current?.getFormData();
+    let tempSerchform:any = await SearchFormModelRef.current?.getFormData();
     tempSerchform['p'] = 0;
-    await getData(tempSerchform);
+    const result = await getData(tempSerchform);
     updateBodyBlock(false);
+    return result;
+  }
+  const deleteSelectedCourtIds = async ()=>{
+    let selectedIds = selected;
+    // console.log(selectedIds);
+    if(selectedIds?.length==0){
+      showMessage('請勾選刪除項目', 'error');return;
+    }
+    const do_function = async():Promise<boolean> => {
+      updateBodyBlock(true);
+      let modelStatus = true;
+      try {
+        let result = await functions.fetchData('DELETE', 'courts', null, {ids:selectedIds});
+        if(result.msg){
+          showMessage(result.msg, 'error');
+        }else{
+          modelStatus = false;
+          const result2 = await goSearch();
+          if(renewCourts){renewCourts(result2.data)};
+        }
+      } catch (error) {
+        // console.error('Error fetching data:', error);
+        const data = error?.response?.data;
+        if (typeof data === 'string') {
+          if (data.match('fk_matchs_courts')){
+            showMessage('有對應此場地的比賽紀錄，不可刪除', 'error');
+          }else{
+            showMessage('刪除場地紀錄發生錯誤', 'error');
+          }
+        }else{
+          showMessage('刪除場地紀錄發生錯誤', 'error');
+        }
+      }
+      updateBodyBlock(false);
+      return modelStatus;
+    }
+    showConfirmModelStatus(
+      `確認刪除？`,
+      `即將刪除勾選的【`+ selectedIds?.length + `】個場地紀錄，確認執行嗎？`,
+      '確認',
+      do_function
+    );
+  }
+  const clickTableCourts = (idx:number, item:any) => {
+    // console.log(item);
+    if(idx<0 && idx>=rows.length){ return; }
+    CourtModelRef.current?.setModel(idx, item); // 呼叫 child 的方法
+  }
+
+  const CourtModelRef = React.useRef<CourtModelMyChildRef>(null);
+  const reGetListCourts= async() => {
+    const result = await goSearch();
+    if(renewCourts){renewCourts(result.data)};
+  }
+  const renewListCourts = async (idx, item)=>{
+    rows[idx] = {...rows[idx], ...item};
+    showRows(rows);
+    if(renewCourt){renewCourt(idx, item)};
   }
 
   return (<>
-    {needSearch && <>
+    <Button size="small" sx={{alignSelf:'center'}} variant="text" color="info"
+            onClick={()=>{goSearch()}}>
+      <AutorenewIcon color={'inherit'} fontSize={'small'} className='cursor-pointer' />
+    </Button>
+    <Box sx={{display:needSearch?'inline-flex':'none'}}>
       <Button size="small" sx={{mr:'1rem',alignSelf:'center'}} 
               onClick={()=>{SearchFormModelRef.current?.setFormModel(true)}}>
         搜尋設定<SearchIcon />
-      </Button>
-      <Button size="small" sx={{alignSelf:'center'}} variant="text" color="info"
-              onClick={()=>{goSearch()}}>
-        <AutorenewIcon color={'inherit'} fontSize={'small'} className='cursor-pointer' />
       </Button>
       <Button size="small" sx={{alignSelf:'center'}} variant="text" color="info" 
               onClick={()=>{SearchFormModelRef.current?.cleanSearch()}}>
@@ -180,7 +276,7 @@ function TableCourts(
           ], size:{xs:6}},
         ]}
         ref={SearchFormModelRef} />
-    </>}
+    </Box>
     <Paper sx={{ width: '100%' }}>
       <TableContainer sx={{ maxHeight: 440 }}>
         <Table stickyHeader aria-label="sticky table">
@@ -239,7 +335,7 @@ function TableCourts(
                       return (
                         <TableCell key={column.id} align={column.align}>
                           {index==0 && <>
-                            <Button color="info" onClick={()=>{clickFirstCell(idx, row)}} sx={{p:0, display:'align', justifyContent:'start'}}>
+                            <Button color="info" onClick={()=>{clickTableCourts(idx, row)}} sx={{p:0, display:'align', justifyContent:'start'}}>
                               {column.format && typeof value === 'number'
                               ? column.format(value)
                               : value}
@@ -271,6 +367,17 @@ function TableCourts(
         labelDisplayedRows={({ from, to, count })=>{ return `${from}–${to} / ${count !== -1 ? count : `超過 ${to}`}`; }}
       />
     </Paper>
+    <Box textAlign="left" sx={{mt:'1rem'}}>
+      <Button size="small" variant="contained" color='error' onClick={deleteSelectedCourtIds}>
+        <DeleteForeverIcon />
+      </Button>
+    </Box>
+
+    <CourtModel updateBodyBlock={updateBodyBlock}
+              reGetList={reGetListCourts}
+              renewList={renewListCourts}
+              checkEditable={checkCourtsEditable}
+              ref={CourtModelRef} />
   </>);
 }
 export default React.forwardRef<MyChildRef, MyChildProps>(TableCourts);

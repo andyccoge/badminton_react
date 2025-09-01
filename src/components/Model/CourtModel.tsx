@@ -27,6 +27,7 @@ type MyChildProps = { // 父傳方法給子
   updateBodyBlock: (status) => void;
   reGetList: () => void;
   renewList: (idx, item) => void;
+  checkEditable?: (idx, item) => string;
 };
 
 const empty_data = {
@@ -36,7 +37,7 @@ const empty_data = {
   "type": 1
 }
 const CourtModel = React.forwardRef<MyChildRef, MyChildProps>((
-  { updateBodyBlock,reGetList,renewList }, ref
+  { updateBodyBlock,reGetList,renewList,checkEditable }, ref
 ) => {
   const { enqueueSnackbar } = useSnackbar();
   const showMessage = functions.createEnqueueSnackbar(enqueueSnackbar);
@@ -92,12 +93,17 @@ const CourtModel = React.forwardRef<MyChildRef, MyChildProps>((
           setOpen(false);
         }
       }else{ // 編輯
-        result = await functions.fetchData('PUT', 'courts', form, {id:primaryId});
-        if(result.msg){
-          showMessage(result.msg, 'error');
+        const error_msg = checkEditable ? checkEditable(index, form) : '';
+        if(error_msg){
+          showMessage(error_msg, 'error');
         }else{
-          await renewList(index, form);
-          setOpen(false);
+          result = await functions.fetchData('PUT', 'courts', form, {id:primaryId});
+          if(result.msg){
+            showMessage(result.msg, 'error');
+          }else{
+            await renewList(index, form);
+            setOpen(false);
+          }
         }
       }
     } catch (error) {

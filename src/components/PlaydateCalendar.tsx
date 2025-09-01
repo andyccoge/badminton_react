@@ -9,7 +9,7 @@ import { DayCalendarSkeleton } from '@mui/x-date-pickers/DayCalendarSkeleton';
 import {Box, Grid, Stack, Typography} from '@mui/material';
 import HorizontalRuleIcon from '@mui/icons-material/HorizontalRule';
 
-import PlaydateCard, {showWeekday, showDate} from '../components/PlaydateCard'
+import PlaydateCard, {showWeekday, showDate, Data as PlaydateData} from '../components/PlaydateCard'
 
 const dayMark = '🏸';
 const today = new Date();
@@ -20,9 +20,9 @@ export type MyChildRef = { // 子暴露方法給父
   getPageHighlightedDays: () => void;
 };
 type MyChildProps = { // 父傳方法給子
-  getData: (where:any) => Promise<any[]>;
-  cards: any[];
-  card_group: any[];
+  getData: (where:any) => Promise<{data:PlaydateData[]}>;
+  cards: PlaydateData[];
+  card_group: {string:PlaydateData[]};
   updateBodyBlock: (status) => void;
   viewPlayDate: (id, idx) => void;
   openPlayDateModel: (id, idx) => void;
@@ -38,12 +38,19 @@ function PlaydateCalendar(
   ref: React.Ref<MyChildRef>
 ) {
   const [selectedDate, setSelectedDate] = React.useState<string>(today_f);
+  const cardGroupRef = React.useRef<HTMLDivElement | null>(null);
 
   function ServerDay(props: PickersDayProps & { highlightedDays?: number[] }) {
     const { highlightedDays = [], day, outsideCurrentMonth, ...other } = props;
 
     other.onDaySelect = (day:Dayjs) =>{
-      setSelectedDate(day.format('YYYY-MM-DD'))
+      setSelectedDate(day.format('YYYY-MM-DD'));
+      setTimeout(()=>{
+        cardGroupRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
     }
 
     const isMarked =
@@ -65,13 +72,13 @@ function PlaydateCalendar(
   }
   async function getMonthData(date: Dayjs, { signal }: { signal: AbortSignal }) {
     // 取得所在月份的打球日資料
-    let tempCards = await getData({
+    let result = await getData({
       'date_s':date.format('YYYY-MM-01'),
       'date_e':date.endOf('month').format('YYYY-MM-DD'),
     });
     // console.log(result)
 
-    const days: number[] = tempCards.map((data, _) => {
+    const days: number[] = result.data.map((data, _) => {
       const temp = new Date(data.datetime);
       return temp.getDate();
     });
@@ -161,7 +168,7 @@ function PlaydateCalendar(
             <HorizontalRuleIcon /> 
             {showDate(selectedDate)}
           </Typography>
-          <Grid container spacing={2} size={{xs:12}}>
+          <Grid container spacing={2} size={{xs:12}} ref={cardGroupRef}>
             {!card_group[selectedDate] && '無資料'}
             {card_group[selectedDate] && card_group[selectedDate].map((idx, index) => (
               <Grid key={'play_date_card-' + index} size={{xs:12, md:6, xl:4}} sx={{alignSelf:'start'}}>

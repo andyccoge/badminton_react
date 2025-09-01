@@ -9,10 +9,11 @@ import ScoreboardIcon from '@mui/icons-material/Scoreboard';
 import SettingsIcon from '@mui/icons-material/Settings';
 interface BottomMenuProps {
   onUserClick: () => void;
+  onCourtClick: () => void;
   onMatchClick: () => void;
 }
 
-export default function BottomMenu({ onUserClick,onMatchClick }: BottomMenuProps) {
+export default function BottomMenu({ onUserClick,onCourtClick,onMatchClick }: BottomMenuProps) {
   const [value, setValue] = React.useState('');
 
   return (
@@ -26,7 +27,7 @@ export default function BottomMenu({ onUserClick,onMatchClick }: BottomMenuProps
       >
         <BottomNavigationAction onClick={onUserClick} // 呼叫父層傳來的函數
           label="球員" icon={<GroupAddIcon />}/>
-        <BottomNavigationAction onClick={()=>{}} // 呼叫父層傳來的函數
+        <BottomNavigationAction onClick={onCourtClick} // 呼叫父層傳來的函數
           label="場地" icon={<LibraryAddIcon />} />
         <BottomNavigationAction onClick={onMatchClick} // 呼叫父層傳來的函數
           label="比數" icon={<ScoreboardIcon />} />

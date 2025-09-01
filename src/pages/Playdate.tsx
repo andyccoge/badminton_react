@@ -24,7 +24,6 @@ import UserModel, {MyChildRef as UserModelMyChildRef} from '../components/Model/
 import TableCourts, {
   MyChildRef as TableCourtsMyChildRef, empty_searchForm as emptyCourtSearchForm
 } from '../components/TableCourts.tsx';
-import CourtModel, {MyChildRef as CourtModelMyChildRef} from '../components/Model/CourtModel';
 import TableMatchs, {
   MyChildRef as TableMatchsMyChildRef, empty_searchForm as emptyMatchSearchForm
 } from '../components/TableMatchs.tsx';
@@ -53,7 +52,6 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   defaulMatchWhere['play_date_id'] = play_date_id;
 
   const [initFinished, setInitFinished] = React.useState(false);
-  const [courts, setCourts] = React.useState<any[]>([]);
   const [cards, setCards] = React.useState<any[]>([]);
   const [reservations, setReservations] = React.useState<any[]>([]);
 
@@ -69,7 +67,7 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
           navigate('/', { replace: true });
           return;
         }
-        setCourts(result.courts);
+        TableCourtsRef.current?.showRows(result.courts);
         TableMatchsRef.current?.setPlayMatchs(result);
         setCards([result.play_date]);
         setReservations(result.reservations);
@@ -204,73 +202,6 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
   }
 
   const TableCourtsRef = React.useRef<TableCourtsMyChildRef>(null);
-  const getCourts = async(where:any={}) => {
-    TableCourtsRef.current?.showRows([]);
-    try {
-      let result = await functions.fetchData('GET', 'courts', null, where);
-      setCourts(result.data);
-      TableCourtsRef.current?.resetSelect();
-      TableCourtsRef.current?.showRows(result.data);
-    } catch (error) {
-      // console.error('Error fetching data:', error);
-      showMessage('取得場地紀錄資料發生錯誤', 'error');
-    }
-  }
-  const deleteSelectedCourtIds = async ()=>{
-    let selectedIds = TableCourtsRef.current?.getSelectedIds();
-    console.log(selectedIds);
-    if(selectedIds?.length==0){
-      showMessage('請勾選刪除項目', 'error');return;
-    }
-    const do_function = async():Promise<boolean> => {
-      updateBodyBlock(true);
-      let modelStatus = true;
-      try {
-        let result = await functions.fetchData('DELETE', 'courts', null, {ids:selectedIds});
-        if(result.msg){
-          showMessage(result.msg, 'error');
-        }else{
-          modelStatus = false;
-          TableCourtsRef.current?.goSearch();
-        }
-      } catch (error) {
-        // console.error('Error fetching data:', error);
-        const data = error?.response?.data;
-        if (typeof data === 'string') {
-          if (data.match('fk_matchs_courts')){
-            showMessage('有對應此場地的比賽紀錄，不可刪除', 'error');
-          }else{
-            showMessage('刪除場地紀錄發生錯誤', 'error');
-          }
-        }else{
-          showMessage('刪除場地紀錄發生錯誤', 'error');
-        }
-      }
-      updateBodyBlock(false);
-      return modelStatus;
-    }
-    showConfirmModelStatus(
-      `確認刪除？`,
-      `即將刪除勾選的【`+ selectedIds?.length + `】個場地紀錄，確認執行嗎？`,
-      '確認',
-      do_function
-    );
-  }
-  const clickTableCourts = (idx:number, item:any) => {
-    // console.log(item);
-    if(idx<0 && idx>=reservations.length){ return; }
-    CourtModelRef.current?.setModel(idx, item); // 呼叫 child 的方法
-  }
-
-  const CourtModelRef = React.useRef<CourtModelMyChildRef>(null);
-  const reGetListCourts = async () => {
-    TableCourtsRef.current?.goSearch();
-  }
-  const renewListCourts = async (idx, item)=>{
-    courts[idx] = {...courts[idx], ...item};
-    setReservations(courts);
-    TableCourtsRef.current?.showRows(courts);
-  }
 
   const TableMatchsRef = React.useRef<TableMatchsMyChildRef>(null);
 
@@ -362,22 +293,15 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
           <Typography variant='h6' textAlign="left" gutterBottom>
             <Box sx={{marginRight: '1rem', display:'inline-block'}}>場地記錄</Box>
             <Fab size="small" color="secondary" aria-label="add"
-                onClick={()=>{CourtModelRef.current?.setModel(-1, {play_date_id:play_date_id})}}
+                onClick={()=>{TableCourtsRef.current?.setModel(-1, {play_date_id:play_date_id})}}
               ><AddIcon />
             </Fab>
           </Typography>
-          <TableCourts updateBodyBlock={updateBodyBlock}
-                            getData={getCourts}
-                            clickFirstCell={clickTableCourts}
-                            where={defaulCourtWhere}
-                            numPerPage={0}
-                            needCheckBox={true}
-                            ref={TableCourtsRef}/>
-          <Box textAlign="left" sx={{mt:'1rem'}}>
-            <Button size="small" variant="contained" color='error' onClick={deleteSelectedCourtIds}>
-              <DeleteForeverIcon />
-            </Button>
-          </Box>
+          <TableCourts updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}
+                      where={defaulCourtWhere}
+                      numPerPage={0}
+                      needCheckBox={true}
+                      ref={TableCourtsRef}/>
         </TabPanel>
         <TabPanel value="tab3" keepMounted>
           <Typography variant='h6' textAlign="left" gutterBottom>比賽記錄</Typography>
@@ -395,10 +319,6 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
                   reGetList={reGetListUsers}
                   renewList={renewListUsers}
                   ref={UserModelRef} />
-      <CourtModel updateBodyBlock={updateBodyBlock}
-                  reGetList={reGetListCourts}
-                  renewList={renewListCourts}
-                  ref={CourtModelRef} />
       <React.Fragment>
         <Dialog
           open={batchAddModelStatus}

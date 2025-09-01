@@ -77,8 +77,8 @@ type MyChildProps = { // 父傳方法給
     do_function_name?: string,
     do_function?: ()=> Promise<boolean>,
   ) => void;
-  countTotal?: number;
   where?: {},
+  countTotal?: number;
   numPerPage?: number,
   needSearch?: boolean,
   needCheckBox?: boolean,
@@ -254,15 +254,14 @@ function TableMatchs(
   }
 
   return (<>
-    {needSearch && <>
+    <Button size="small" sx={{alignSelf:'center'}} variant="text" color="info"
+            onClick={()=>{goSearch()}}>
+      <AutorenewIcon color={'inherit'} fontSize={'small'} className='cursor-pointer' />
+    </Button>
+    <Box sx={{display:needSearch?'inline-flex':'none'}}>
       <Button size="small" sx={{mr:'1rem',alignSelf:'center'}} 
               onClick={()=>{SearchFormModelRef.current?.setFormModel(true)}}>
         搜尋設定<SearchIcon />
-      </Button>
-
-      <Button size="small" sx={{alignSelf:'center'}} variant="text" color="info"
-              onClick={()=>{goSearch()}}>
-        <AutorenewIcon color={'inherit'} fontSize={'small'} className='cursor-pointer' />
       </Button>
       <Button size="small" sx={{alignSelf:'center'}} variant="text" color="info" 
               onClick={()=>{SearchFormModelRef.current?.cleanSearch()}}>
@@ -274,7 +273,7 @@ function TableMatchs(
           {label:'姓名/綽號/LINE名稱', name:'name_keyword', type:'text', options:[], size:{xs:12}},
         ]}
         ref={SearchFormModelRef} />
-    </>}
+    </Box>
     <Paper sx={{ width: '100%' }}>
       <TableContainer sx={{ maxHeight: 440 }}>
         <Table stickyHeader aria-label="sticky table" sx={{ borderCollapse: 'collapse' }}>

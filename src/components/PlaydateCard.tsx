@@ -5,6 +5,14 @@ import HorizontalRuleIcon from '@mui/icons-material/HorizontalRule';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import EditSquareIcon from '@mui/icons-material/EditSquare';
 
+export interface Data {
+  id:number,
+  datetime:string,
+  datetime2:string,
+  location:string,
+  note:string,
+}
+
 export function showWeekday(datetime):string{
   let tempDate = new Date(datetime)
   let now = new Date()
@@ -38,7 +46,7 @@ type MyChildProps = { // 父傳方法給子
   openPlayDateModel: (id, idx) => void;
   deletePlayDate: (id, idx) => void;
   index: number;
-  card: any;
+  card: Data;
   preDatetime: string;
   alertTime_s?: number;
   alertTime_e?: number;

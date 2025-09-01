@@ -20,7 +20,7 @@ const pages = [
   ['/playdates','打球日管理'], 
   ['/users', '球員管理'],
   // ['/playdate', '打球日詳細內容'],
-  ['/play', '安排比賽'],
+  // ['/play', '安排比賽'],
 ];
 const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
 

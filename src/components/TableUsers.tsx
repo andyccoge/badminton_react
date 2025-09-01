@@ -11,7 +11,7 @@ import Checkbox from '@mui/material/Checkbox';
 
 import SearchIcon from '@mui/icons-material/Search';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
-import {Button} from '@mui/material';
+import {Box, Button} from '@mui/material';
 
 import SearchFormModel, {
   MyChildRef as SearchFormModelMyChildRef
@@ -83,8 +83,8 @@ type MyChildProps = { // 父傳方法給
   updateBodyBlock: (status) => void;
   getData: (where:any) => void;
   clickFirstCell:(idx:number, item:any) => void;
-  countTotal?: number;
   where?: {},
+  countTotal?: number;
   numPerPage?: number,
   needSearch?: boolean,
   needCheckBox?: boolean,
@@ -176,14 +176,14 @@ function TableUsers(
   }
 
   return (<>
-    {needSearch && <>
+    <Button size="small" sx={{alignSelf:'center'}} variant="text" color="info"
+            onClick={()=>{goSearch()}}>
+      <AutorenewIcon color={'inherit'} fontSize={'small'} className='cursor-pointer' />
+    </Button>
+    <Box sx={{display:needSearch?'inline-flex':'none'}}>
       <Button size="small" sx={{mr:'1rem',alignSelf:'center'}} 
               onClick={()=>{SearchFormModelRef.current?.setFormModel(true)}}>
         搜尋設定<SearchIcon />
-      </Button>
-      <Button size="small" sx={{alignSelf:'center'}} variant="text" color="info"
-              onClick={()=>{goSearch()}}>
-        <AutorenewIcon color={'inherit'} fontSize={'small'} className='cursor-pointer' />
       </Button>
       <Button size="small" sx={{alignSelf:'center'}} variant="text" color="info" 
               onClick={()=>{SearchFormModelRef.current?.cleanSearch()}}>
@@ -201,7 +201,7 @@ function TableUsers(
           ], size:{xs:6}},
         ]}
         ref={SearchFormModelRef} />
-    </>}
+    </Box>
     <Paper sx={{ width: '100%' }}>
       <TableContainer sx={{ maxHeight: 440 }}>
         <Table stickyHeader aria-label="sticky table">
