@@ -2,12 +2,17 @@ import * as functions from '../functions.tsx';
 import * as React from 'react';
 import { useSnackbar } from 'notistack';
 
-import {Drawer, Grid, Box, Divider, Fab} from '@mui/material';
+import {Drawer, Grid, Box, Divider, Button, Fab} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import AutorenewIcon from '@mui/icons-material/Autorenew';
+import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople';
+import DirectionsWalkIcon from '@mui/icons-material/DirectionsWalk';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import {Dialog,DialogContent,DialogTitle} from '@mui/material';
 
 import Menu from './BottomNavigation/Menu';
 import UserPanel from './BottomNavigation/UserPanel';
+import TextAreaBatchReservation from '../components/TextAreaBatchReservation.tsx';
 import {UserType} from '../components/UserNameCard';
 import TableCourts, {
   MyChildRef as TableCourtsMyChildRef, empty_searchForm as emptyCourtSearchForm, Data as CourtData
@@ -20,14 +25,14 @@ import TableMatchs, {
 const numPerPage = 0; /*列表一頁顯示數量(0表示不使用分頁功能)*/
 
 export type MyChildRef = { // 子暴露方法給父
-  setUserPanelDrawerOpen:(status:any) => void;
-  setCourtDrawerOpenOpen:(status:any) => void;
-  setMatchDrawerOpenOpen:(status:any) => void;
+  setUserPanelDrawerOpen:(status:boolean) => void;
+  setCourtDrawerOpenOpen:(status:boolean) => void;
+  setMatchDrawerOpenOpen:(status:boolean) => void;
 
   setCourts:(courts:CourtData[]) => void;
   setCourtsModel: (idx, item, primaryKey?) => void;
 
-  setPlayMatchs:(result:{matchs:MatchData[]; user_map:any}) => void;
+  setPlayMatchs:(result:{matchs:MatchData[]; user_map:{[key: string]: UserType}}) => void;
   showMatchs: (items:Array<MatchData>) => void;
   getMatchs: () => Array<MatchData>;
 };
@@ -41,6 +46,7 @@ type MyChildProps = { // 父傳方法給子
   ) => void;
   playDateId?: string,
   users?:UserType[];
+  renewReservations?: ()=> void;
   cleanSeletedCourtName?: () => void;
   doSelectUser?: (userIdx:number) => void;
   setUserShowUp?: (idx:number) => void;
@@ -56,7 +62,7 @@ type MyChildProps = { // 父傳方法給子
 };
 const BottomNavigation = React.forwardRef<MyChildRef, MyChildProps>((
   {
-    updateBodyBlock, showConfirmModelStatus, playDateId='0', users=[],
+    updateBodyBlock, showConfirmModelStatus, playDateId='0', users=[], renewReservations=()=>{},
     cleanSeletedCourtName, doSelectUser, setUserShowUp, setUserLeave, 
     userIdxMatch=[], userIdxMatchCode={}, userIdxPrepare=[], 
     setUserModel, setUserDrawer, renewCourts, renewCourt, checkCourtsEditable,
@@ -73,16 +79,16 @@ const BottomNavigation = React.forwardRef<MyChildRef, MyChildProps>((
   defaulMatchWhere['play_date_id'] = playDateId;
 
   React.useImperativeHandle(ref, () => ({
-    setUserPanelDrawerOpen:(status:any) => {setUserPanelDrawerOpen(status)},
-    setCourtDrawerOpenOpen:(status:any) => {setCourtDrawerOpenOpen(status)},
-    setMatchDrawerOpenOpen:(status:any) => {setMatchDrawerOpenOpen(status)},
+    setUserPanelDrawerOpen:(status:boolean) => {setUserPanelDrawerOpen(status)},
+    setCourtDrawerOpenOpen:(status:boolean) => {setCourtDrawerOpenOpen(status)},
+    setMatchDrawerOpenOpen:(status:boolean) => {setMatchDrawerOpenOpen(status)},
     
     setCourts:(courts:CourtData[]) => { TableCourtsRef.current?.showRows(courts); },
     setCourtsModel: (idx, item, primaryKey?) => {
       TableCourtsRef.current?.setModel(idx, item, primaryKey);
     },
 
-    setPlayMatchs:(result:{matchs:MatchData[]; user_map:any}) => {
+    setPlayMatchs:(result:{matchs:MatchData[]; user_map:{[key: string]: UserType}}) => {
       TableMatchsRef.current?.setPlayMatchs(result);
     },
     showMatchs:(items:Array<MatchData>) => {
@@ -101,6 +107,8 @@ const BottomNavigation = React.forwardRef<MyChildRef, MyChildProps>((
 
   const TableMatchsRef = React.useRef<TableMatchsMyChildRef>(null);
 
+  const [openTextAreaBatchReservation, setTextAreaBatchReservationOpen] = React.useState(false);
+
   return (
     <>
       {/* 下方選單，點擊 User 時打開 Drawer */}
@@ -114,12 +122,29 @@ const BottomNavigation = React.forwardRef<MyChildRef, MyChildProps>((
         sx={{maxHeight:'70vh', top:'unset', bottom:0}}
         ModalProps={{ keepMounted: true, /* 🔑 保持內容在 DOM 裡*/ }}
       >
-        <UserPanel
-          updateBodyBlock={updateBodyBlock}
-          onClose={() => {
+        <Box padding={'5px'} display={'flex'} justifyContent={'space-between'}>
+          <Box>
+            <Fab size="small" color="secondary" aria-label="add" sx={{marginRight:'0.5rem'}}
+                onClick={()=>{setTextAreaBatchReservationOpen(true)}}
+              ><AddIcon />
+            </Fab>
+            <AutorenewIcon color={'inherit'} fontSize={'small'} className='cursor-pointer' onClick={()=>{renewReservations()}}/>
+          </Box>
+          <Box display={'flex'} alignItems={'center'}>
+            <Button size='small' sx={{mr:'1rem'}} onClick={()=>{if(setUserShowUp){setUserShowUp(-1)}}}>
+              全部報到 <EmojiPeopleIcon/>
+            </Button>
+            <Button size='small' color='secondary' onClick={()=>{if(setUserLeave){setUserLeave(-1)}}}>
+              全部離場 <DirectionsWalkIcon/>
+            </Button>
+          </Box>
+          <HighlightOffIcon onClick={() => {
             setUserPanelDrawerOpen(false);
             if(cleanSeletedCourtName){cleanSeletedCourtName()};
-          }}
+          }} className='cursor-pointer'/>
+        </Box>
+        <UserPanel
+          updateBodyBlock={updateBodyBlock}
           users={users}
           doSelectUser={doSelectUser}
           setUserShowUp={setUserShowUp}
@@ -174,6 +199,25 @@ const BottomNavigation = React.forwardRef<MyChildRef, MyChildProps>((
                       ref={TableMatchsRef}/>
         </Grid>
       </Drawer>
+
+      <React.Fragment>
+        <Dialog
+          open={openTextAreaBatchReservation}
+          slots={{
+            transition: functions.Transition,
+          }}
+          keepMounted
+          onClose={()=>{setTextAreaBatchReservationOpen(false);}}
+          aria-describedby="alert-dialog-slide-description"
+        >
+          <DialogTitle>{"批次添加報名"}</DialogTitle>
+          <DialogContent>
+            <TextAreaBatchReservation updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}
+                                      playDateId={playDateId}
+                                      renewReservations={()=>{renewReservations()}}/>
+          </DialogContent>
+        </Dialog>
+      </React.Fragment>
     </>
   );
 })

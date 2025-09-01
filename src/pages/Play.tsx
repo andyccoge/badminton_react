@@ -53,8 +53,19 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
   const [selectedCourtIdx, setSelectedCourtIdx] = React.useState<number>(-1);
   const [selectedNameIdx, setSelectedNameIdx] = React.useState<number>(-1);
 
-  const setPlayUsers = (users:any[], Oris:any[]=[]) => {
-    users = users.map((item)=>{ return initCourtUser(item); })
+  const setPlayUsers = (users:any[]) => {
+    users = users.map((item)=>{ 
+      let donthasUser = 1;
+      for (let xx = 0; xx < reservations.length; xx++) {
+        if(reservations[xx].user_id == item.user_id){
+          item = {...reservations[xx], ...item};
+          donthasUser = 0; break;
+        }
+      }
+      if(donthasUser){ initCourtUser(item); }
+      return item;
+    });
+    
     setReservations(users);
   }
   const setPlayCourts = (courts:any[]) => {
@@ -130,7 +141,7 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
     where.play_date_id = play_date_id;
     try {
       let result = await functions.fetchData('GET', 'reservations', null, where);
-      setPlayUsers(result.data, reservations);
+      await setPlayUsers(result.data);
     } catch (error) {
       showMessage('取得報名紀錄資料發生錯誤', 'error');
     }
@@ -411,6 +422,7 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
         <BottomNavigation updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}
           playDateId={play_date_id}
           users={reservations}
+          renewReservations={goSearchReservations}
           cleanSeletedCourtName={cleanSeletedCourtName}
           doSelectUser={doSelectUser}
           setUserShowUp={setUserShowUp}

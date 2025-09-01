@@ -1,11 +1,8 @@
 import * as React from 'react';
-import {Button, Grid} from '@mui/material';
+import {Grid} from '@mui/material';
 import {Box, Divider,} from '@mui/material';
 import {Card, CardContent,Typography} from '@mui/material';
 import { grey } from '@mui/material/colors';
-import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople';
-import DirectionsWalkIcon from '@mui/icons-material/DirectionsWalk';
-import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
 import UserNameCard, {MyChildRef as UserNameCardMyChildRef, UserType} from '../../components/UserNameCard';
@@ -14,7 +11,6 @@ export type MyChildRef = { // 子暴露方法給父
 };
 type MyChildProps = { // 父傳方法給子
   updateBodyBlock: (status) => void;
-  onClose: () => void;
   users?:UserType[];
   doSelectUser?: (userIdx:number) => void;
   setUserShowUp?: (idx:number) => void;
@@ -27,7 +23,7 @@ type MyChildProps = { // 父傳方法給子
 };
 
 const UserPanel = React.forwardRef<MyChildRef, MyChildProps>((
-  { updateBodyBlock, onClose, users=[], 
+  { updateBodyBlock, users=[], 
     doSelectUser, setUserShowUp, setUserLeave, userIdxMatch=[], userIdxMatchCode={}, userIdxPrepare=[],
     setUserModel, setUserDrawer,
   }, ref
@@ -42,15 +38,6 @@ const UserPanel = React.forwardRef<MyChildRef, MyChildProps>((
   };
 
   return (<>
-      <Box padding={'5px'}>
-        <Button size='small' sx={{mr:'1rem'}} onClick={()=>{if(setUserShowUp){setUserShowUp(-1)}}}>
-          全部報到 <EmojiPeopleIcon/>
-        </Button>
-        <Button size='small' color='secondary' onClick={()=>{if(setUserLeave){setUserLeave(-1)}}}>
-          全部離場 <DirectionsWalkIcon/>
-        </Button>
-        <HighlightOffIcon onClick={onClose} className='cursor-pointer' sx={{position:'absolute', right:5, top:8}}/>
-      </Box>
       <Box role="presentation" p={'0.25rem 0.25rem'} maxHeight={'65vh'} overflow={'scroll'}>
         <Divider sx={{mb:'0.5rem'}}/>
         <Grid container flexWrap={'wrap'} spacing={0.5}>

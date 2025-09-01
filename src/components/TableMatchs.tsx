@@ -18,7 +18,7 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import {Box, Button} from '@mui/material';
 import { Link } from 'react-router-dom';
 
-
+import {UserType} from '../components/UserNameCard';
 import SearchFormModel, {
   MyChildRef as SearchFormModelMyChildRef
 } from '../components/Model/SearchFormModel';
@@ -62,7 +62,7 @@ export interface Data {
 
 
 export type MyChildRef = { // 子暴露方法給父
-  setPlayMatchs:(result:{matchs:Data[]; user_map:any}) => void;
+  setPlayMatchs:(result:{matchs:Data[]; user_map:{[key: string]: UserType}}) => void;
   showRows: (items:Array<Data>) => void;
   getRows: () => Array<Data>;
   getSelectedIds: () => readonly number[];
@@ -102,13 +102,13 @@ function TableMatchs(
     },
     resetSelect: () => { setSelected([]); },
     goSearch: async() => { await goSearch(); },
-    setPlayMatchs:(result:{matchs:Data[]; user_map:any}) => {
+    setPlayMatchs:(result:{matchs:Data[]; user_map:{[key: string]: UserType}}) => {
       setUserIdMap({ ...userIdMap, ...result.user_map});
       showRows(result.matchs);
     }
   }));
 
-  const [userIdMap, setUserIdMap] = React.useState<any>({})
+  const [userIdMap, setUserIdMap] = React.useState<{[key: string]: UserType}>({})
   const columns: Column[] = [
     { id: 'user_id_1', label: '球員1', minWidth: 100, align:'center',
       format: (value: number) => userIdMap[value].name

@@ -172,7 +172,10 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
 
       <Typography variant='h6' textAlign="left">球員名單</Typography>
       <Grid container spacing={0} sx={{mb:'1rem'}}>
-        <Grid size={{xs:12, sm:11}}>
+        <Grid size={{xs:12, sm:10, md:11}}>
+          <FormHelperText error={true}>
+            請複製名單並貼入此輸入區，「每列」將被視為1為球員，並新增至球員名單
+          </FormHelperText>
           <TextareaAutosize
               aria-label="球員名單"
               minRows={3} maxRows={3}
@@ -182,7 +185,7 @@ function Users({updateBodyBlock, showConfirmModelStatus}) {
               onChange={(e) => setBatchUserText(e.target.value)}
             />
         </Grid>
-        <Grid size={{xs:12, sm:1}}>
+        <Grid size={{xs:12, sm:2, md:1}}>
           <Button onClick={()=>{batchAdd(batchUserText)}}>送出</Button>
         </Grid>
       </Grid>

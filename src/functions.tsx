@@ -1,3 +1,7 @@
+import * as React from 'react';
+import { TransitionProps } from '@mui/material/transitions';
+import Slide from '@mui/material/Slide';
+
 import axios from 'axios';
 import {VariantType, closeSnackbar } from 'notistack';
 import CloseIcon from '@mui/icons-material/Close';
@@ -130,3 +134,12 @@ export const middleEllipsis = (str, frontLen = 7, backLen = 0) => {
   if (str.length <= frontLen + backLen) return str;
   return str.slice(0, frontLen) + "..." + (backLen?str.slice(-backLen):'');
 };
+
+export const Transition = React.forwardRef(function Transition(
+  props: TransitionProps & {
+    children: React.ReactElement<any, any>;
+  },
+  ref: React.Ref<unknown>,
+) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});

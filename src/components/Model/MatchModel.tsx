@@ -4,25 +4,16 @@ import { useSnackbar } from 'notistack';
 
 import Button from '@mui/material/Button';
 import {Dialog,DialogActions,DialogContent,DialogContentText,DialogTitle} from '@mui/material';
-import Slide from '@mui/material/Slide';
-import { TransitionProps } from '@mui/material/transitions';
 import {TextField, Stack, Grid, Divider} from '@mui/material';
 
 import {FormControl, InputLabel, MenuItem} from '@mui/material';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 
-const Transition = React.forwardRef(function Transition(
-  props: TransitionProps & {
-    children: React.ReactElement<any, any>;
-  },
-  ref: React.Ref<unknown>,
-) {
-  return <Slide direction="up" ref={ref} {...props} />;
-});
+import {UserType} from '../../components/UserNameCard';
 
 export type MyChildRef = { // 子暴露方法給父
   setModel: (idx, item, primaryKey?) => void;
-  setUserMap:(map:any) => void;
+  setUserMap:(map:{[key: string]: UserType}) => void;
 };
 type MyChildProps = { // 父傳方法給子
   updateBodyBlock: (status) => void;
@@ -48,7 +39,7 @@ const MatchModel = React.forwardRef<MyChildRef, MyChildProps>((
   const { enqueueSnackbar } = useSnackbar();
   const showMessage = functions.createEnqueueSnackbar(enqueueSnackbar);
 
-  const [userIdMap, setUserIdMap] = React.useState<any>({});
+  const [userIdMap, setUserIdMap] = React.useState<{[key: string]: UserType}>({});
 
   const [primaryId, setPrimaryId] = React.useState(0);
   const [index, setIndex] = React.useState(-1);
@@ -122,7 +113,7 @@ const MatchModel = React.forwardRef<MyChildRef, MyChildProps>((
       <Dialog
         open={open}
         slots={{
-          transition: Transition,
+          transition: functions.Transition,
         }}
         keepMounted
         onClose={handleClose}
@@ -133,24 +124,24 @@ const MatchModel = React.forwardRef<MyChildRef, MyChildProps>((
           <Grid container spacing={2}>
             <Grid size={{xs:12, sm:6}}>
               隊伍1：<br />
-              {
+              <b>{
                 [
                   userIdMap[form.user_id_1] && userIdMap[form.user_id_1].name,
                   userIdMap[form.user_id_2] && userIdMap[form.user_id_2].name
                 ].filter((has)=>{return has}).join('、') || '(無球員)'
-              }
+              }</b>
               <TextField fullWidth variant="filled" size="small" type="number"
                         onChange={handleChange} onKeyDown={handleKeyDown} 
                         label="隊伍1比數" name="point_12" value={form.point_12}/>
             </Grid>
             <Grid size={{xs:12, sm:6}}>
               隊伍2：<br />
-              {
+              <b>{
                 [
                   userIdMap[form.user_id_3] && userIdMap[form.user_id_3].name,
                   userIdMap[form.user_id_4] && userIdMap[form.user_id_4].name
                 ].filter((has)=>{return has}).join('、') || '(無球員)'
-              }
+              }</b>
               <TextField fullWidth variant="filled" size="small" type="number"
                         onChange={handleChange} onKeyDown={handleKeyDown} 
                         label="隊伍2比數" name="point_34" value={form.point_34}/>

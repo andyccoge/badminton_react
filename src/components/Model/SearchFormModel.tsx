@@ -4,21 +4,10 @@ import { useSnackbar } from 'notistack';
 
 import Button from '@mui/material/Button';
 import {Box, Dialog,DialogActions,DialogContent,DialogContentText,DialogTitle} from '@mui/material';
-import Slide from '@mui/material/Slide';
-import { TransitionProps } from '@mui/material/transitions';
 import {TextField, Stack, Grid} from '@mui/material';
-
 import {FormControl, InputLabel, MenuItem} from '@mui/material';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 
-const Transition = React.forwardRef(function Transition(
-  props: TransitionProps & {
-    children: React.ReactElement<any, any>;
-  },
-  ref: React.Ref<unknown>,
-) {
-  return <Slide direction="up" ref={ref} {...props} />;
-});
 interface optionType {
   text: string,
   value: any,
@@ -92,7 +81,7 @@ const SearchFormModel = React.forwardRef<MyChildRef, MyChildProps>((
       <Dialog
         open={open}
         slots={{
-          transition: Transition,
+          transition: functions.Transition,
         }}
         keepMounted
         onClose={()=>{setOpen(false)}}
