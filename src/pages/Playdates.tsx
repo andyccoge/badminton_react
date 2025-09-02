@@ -20,9 +20,9 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import Fab from '@mui/material/Fab';
 import AddIcon from '@mui/icons-material/Add';
 
-import AdminNav from '../components/AdminNav'
+import AdminNav from '../components/AdminNav';
 import PlayDateModel, {MyChildRef as playDateModelMyChildRef} from '../components/Model/PlayDateModel';
-import PlaydateCard from '../components/PlaydateCard'
+import PlaydateCard, {Data as PlaydateData} from '../components/PlaydateCard';
 import PlaydateCalendar, {MyChildRef as PlaydateCalendarMyChildRef} from '../components/PlaydateCalendar';
 
 const today = new Date();
@@ -53,7 +53,6 @@ function Playdates({updateBodyBlock, showConfirmModelStatus}) {
       try {
         await getCurrentPlay();
         await getData();
-        await playdateCalendarRef.current?.getPageHighlightedDays();
 
       } catch (error) {
         // console.error('Error fetching data:', error);
@@ -63,7 +62,7 @@ function Playdates({updateBodyBlock, showConfirmModelStatus}) {
     })(); // Call the IIFE immediately
   }, []); // Empty dependency array ensures it runs only once on mount
 
-  const getData = async (where:any=null):Promise<any> => {
+  const getData = async (where:any=null):Promise<{data:PlaydateData[]}> => {
     try {
       let result = await functions.fetchData('GET', 'play_date', null, where);
       // console.log(result.data);
@@ -74,7 +73,7 @@ function Playdates({updateBodyBlock, showConfirmModelStatus}) {
     } catch (error) {
       // console.error('Error fetching data:', error);
       showMessage('取得打球日資料發生錯誤', 'error');
-      return {};
+      return { data:[] };
     }
   }
   const getgetCurrentPlayTime = () => {
@@ -112,9 +111,11 @@ function Playdates({updateBodyBlock, showConfirmModelStatus}) {
 
   const reGetList = async () => {
     await getCurrentPlay();
-    let data = await getData();
-    await playdateCalendarRef.current?.getPageHighlightedDays();
-    return data;
+    if(showWay=='month'){
+      await playdateCalendarRef.current?.getPageHighlightedDays();
+    }else{
+      await getData();
+    }
   }
   const renewList = async (idx, item)=>{
     cards[idx] = {...cards[idx], ...item};
@@ -128,8 +129,15 @@ function Playdates({updateBodyBlock, showConfirmModelStatus}) {
     newShowWay: string,
   ) => {
     if (newShowWay !== null) {
+      updateBodyBlock(true)
+      if(newShowWay=='month' && showWay!='month'){
+        await playdateCalendarRef.current?.getPageHighlightedDays()
+      }else if(newShowWay!='month' && showWay=='month'){
+        await getData()
+      }
       setShowWay(newShowWay);
     }
+    updateBodyBlock(false)
   };
   const showWayControl = {
     value: showWay,

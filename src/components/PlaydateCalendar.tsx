@@ -70,7 +70,7 @@ function PlaydateCalendar(
       </Badge>
     );
   }
-  async function getMonthData(date: Dayjs, { signal }: { signal: AbortSignal }) {
+  async function getMonthData(date: Dayjs, { signal }: { signal: AbortSignal }):Promise<{daysToHighlight:number[]}>{
     // 取得所在月份的打球日資料
     let result = await getData({
       'date_s':date.format('YYYY-MM-01'),
