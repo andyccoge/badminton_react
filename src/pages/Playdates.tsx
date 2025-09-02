@@ -53,6 +53,7 @@ function Playdates({updateBodyBlock, showConfirmModelStatus}) {
       try {
         await getCurrentPlay();
         await getData();
+        await playdateCalendarRef.current?.getPageHighlightedDays();
 
       } catch (error) {
         // console.error('Error fetching data:', error);
@@ -112,6 +113,7 @@ function Playdates({updateBodyBlock, showConfirmModelStatus}) {
   const reGetList = async () => {
     await getCurrentPlay();
     let data = await getData();
+    await playdateCalendarRef.current?.getPageHighlightedDays();
     return data;
   }
   const renewList = async (idx, item)=>{
@@ -126,15 +128,8 @@ function Playdates({updateBodyBlock, showConfirmModelStatus}) {
     newShowWay: string,
   ) => {
     if (newShowWay !== null) {
-      updateBodyBlock(true)
-      if(newShowWay=='month' && showWay!='month'){
-        await playdateCalendarRef.current?.getPageHighlightedDays()
-      }else if(newShowWay!='month' && showWay=='month'){
-        await getData()
-      }
       setShowWay(newShowWay);
     }
-    updateBodyBlock(false)
   };
   const showWayControl = {
     value: showWay,

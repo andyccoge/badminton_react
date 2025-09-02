@@ -6,6 +6,8 @@ import Button from '@mui/material/Button';
 import {Dialog,DialogActions,DialogContent,DialogContentText,DialogTitle} from '@mui/material';
 import {TextField, Stack, Grid} from '@mui/material';
 
+import { Data as PlaydateData } from "../../components/PlaydateCard.tsx";
+
 export type MyChildRef = { // 子暴露方法給父
   setModel: (idx, item, primaryKey?) => void;
 };
@@ -15,7 +17,7 @@ type MyChildProps = { // 父傳方法給子
   renewList: (idx, item) => void;
 };
 
-const empty_data = {
+const empty_data:PlaydateData = {
   "id":-1,
   "datetime":" ",
   "datetime2":" ",
@@ -30,7 +32,7 @@ const PlayDateModel = React.forwardRef<MyChildRef, MyChildProps>((
 
   const [primaryId, setPrimaryId] = React.useState(0);
   const [index, setIndex] = React.useState(-1);
-  const [form, setForm] = React.useState(JSON.parse(JSON.stringify(empty_data)));
+  const [form, setForm] = React.useState<PlaydateData>(JSON.parse(JSON.stringify(empty_data)));
   const handleChange_sd = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleChange(e)
     let { value } = e.target;
@@ -57,14 +59,14 @@ const PlayDateModel = React.forwardRef<MyChildRef, MyChildProps>((
   // expose focus() method to parent
   React.useImperativeHandle(ref, () => ({
     setModel: (idx, item, primaryKey='id') => {
-      let data = Object.keys(empty_data).reduce(
+      let data = Object.keys(empty_data).reduce<PlaydateData>(
         (acc, key) => {
           acc[key] = item.hasOwnProperty(key) ? item[key] : empty_data[key];
           return acc;
         },
-        {}
+        {} as PlaydateData
       );
-      // console.log(data)
+      // console.log(data);
       setIndex(idx);
       setForm(data);
       setPrimaryId(item[primaryKey]);
@@ -80,6 +82,8 @@ const PlayDateModel = React.forwardRef<MyChildRef, MyChildProps>((
     updateBodyBlock(true); //顯示遮蓋
     // console.log(form);
     let result:any = null;
+    form.datetime = form.datetime.trim();
+    form.datetime2 = form.datetime2.trim();
     try {
       if(form.id==-1){ // 新增
         result = await functions.fetchData('POST', 'play_date', form);
@@ -100,7 +104,16 @@ const PlayDateModel = React.forwardRef<MyChildRef, MyChildProps>((
       }
     } catch (error) {
       // console.error('Error fetching data:', error);
-      showMessage('發生錯誤', 'error');
+      const data = error?.response?.data;
+      if (typeof data === 'string') {
+        if(data.match('DB operation error:')) {
+          showMessage(data.split('DB operation error:')[1], 'error');
+        }else{
+          showMessage('發生錯誤', 'error');
+        }
+      }else{
+        showMessage('發生錯誤', 'error');
+      }
     }
     
     updateBodyBlock(false); //隱藏遮蓋

@@ -119,11 +119,11 @@ function PlaydateCalendar(
   React.useImperativeHandle(ref, () => ({
     getPageHighlightedDays: async()=>{
       if(selectedDate){
-        console.log(selectedDate)
-        await fetchHighlightedDays(dayjs(selectedDate))
+        // console.log(selectedDate);
+        await fetchHighlightedDays(dayjs(selectedDate));
       }else{
-        console.log(initialValue)
-        await fetchHighlightedDays(initialValue)
+        // console.log(initialValue);
+        await fetchHighlightedDays(initialValue);
       }
     },
   }));
