@@ -12,6 +12,10 @@ export interface Data {
   location:string,
   note:string,
 }
+export interface ShowPlaydateData extends Data{
+  count_courts: number,
+  count_reservations: number,
+}
 
 export function showWeekday(datetime):string{
   let tempDate = new Date(datetime)
@@ -46,7 +50,7 @@ type MyChildProps = { // 父傳方法給子
   openPlayDateModel: (id, idx) => void;
   deletePlayDate: (id, idx) => void;
   index: number;
-  card: Data;
+  card: ShowPlaydateData;
   preDatetime: string;
   alertTime_s?: number;
   alertTime_e?: number;
@@ -106,11 +110,11 @@ const PlaydateCard = React.forwardRef<MyChildRef, MyChildProps>((
             <Box className="flex justify-between">
               <Box>
                 <Typography variant="h6" component="div" align='left'>
-                  {card.location}_{"X"}面場
+                  {card.location}_{card.count_courts}面場
                 </Typography>
                 <Typography component="div" align='left'>
                   <Typography variant="body2" color="text.secondary" className='inline-block pr-3'>
-                    報名狀態：{"XXX"}人
+                    報名狀態：{card.count_reservations}人
                   </Typography>
                 </Typography>
               </Box>

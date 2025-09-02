@@ -9,7 +9,7 @@ import { DayCalendarSkeleton } from '@mui/x-date-pickers/DayCalendarSkeleton';
 import {Box, Grid, Stack, Typography} from '@mui/material';
 import HorizontalRuleIcon from '@mui/icons-material/HorizontalRule';
 
-import PlaydateCard, {showWeekday, showDate, Data as PlaydateData} from '../components/PlaydateCard'
+import PlaydateCard, {showWeekday, showDate, Data as PlaydateData, ShowPlaydateData} from '../components/PlaydateCard'
 
 const dayMark = '🏸';
 const today = new Date();
@@ -21,8 +21,8 @@ export type MyChildRef = { // 子暴露方法給父
 };
 type MyChildProps = { // 父傳方法給子
   getData: (where:any) => Promise<{data:PlaydateData[]}>;
-  cards: PlaydateData[];
-  card_group: {string:PlaydateData[]};
+  cards: ShowPlaydateData[];
+  card_group: {[key: string]:number[]};
   updateBodyBlock: (status) => void;
   viewPlayDate: (id, idx) => void;
   openPlayDateModel: (id, idx) => void;

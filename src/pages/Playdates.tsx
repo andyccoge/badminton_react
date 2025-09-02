@@ -22,7 +22,7 @@ import AddIcon from '@mui/icons-material/Add';
 
 import AdminNav from '../components/AdminNav';
 import PlayDateModel, {MyChildRef as playDateModelMyChildRef} from '../components/Model/PlayDateModel';
-import PlaydateCard, {Data as PlaydateData} from '../components/PlaydateCard';
+import PlaydateCard, {Data as PlaydateData, ShowPlaydateData} from '../components/PlaydateCard';
 import PlaydateCalendar, {MyChildRef as PlaydateCalendarMyChildRef} from '../components/PlaydateCalendar';
 
 const today = new Date();
@@ -33,10 +33,10 @@ function Playdates({updateBodyBlock, showConfirmModelStatus}) {
   const { enqueueSnackbar } = useSnackbar();
   const showMessage = functions.createEnqueueSnackbar(enqueueSnackbar);
 
-  const [cards, setCards] = React.useState<any[]>([]);
-  const [currentPlay, setCurrentPlay] = React.useState<any[]>([]);
+  const [cards, setCards] = React.useState<ShowPlaydateData[]>([]);
+  const [currentPlay, setCurrentPlay] = React.useState<ShowPlaydateData[]>([]);
   // 建立 group，每次 cards 更新都會重新建立
-  const card_group = React.useMemo(() => {
+  const card_group:{[key: string]:number[]} = React.useMemo(() => {
     return cards.reduce((acc, item, index) => {
       const dateKey = item.datetime.split(' ')[0];
       if (!acc[dateKey]) acc[dateKey] = [];
@@ -64,7 +64,7 @@ function Playdates({updateBodyBlock, showConfirmModelStatus}) {
 
   const getData = async (where:any=null):Promise<{data:PlaydateData[]}> => {
     try {
-      let result = await functions.fetchData('GET', 'play_date', null, where);
+      let result = await functions.fetchData('GET', 'play_dates_data', null, where);
       // console.log(result.data);
       setCards(result.data);
       // console.log(cards)
@@ -95,7 +95,7 @@ function Playdates({updateBodyBlock, showConfirmModelStatus}) {
     setInitFinished(false);
     const [datetime_s, datetime_e] = getgetCurrentPlayTime();
     try {
-      let result = await functions.fetchData('GET', 'play_date', null, {
+      let result = await functions.fetchData('GET', 'play_dates_data', null, {
         'datetime_s': datetime_s,
         'datetime_e': datetime_e,
       });
@@ -243,7 +243,7 @@ function Playdates({updateBodyBlock, showConfirmModelStatus}) {
                     打球日期：{currentPlay[0].datetime.split(" ")[0]}<br/>
                     打球時間：{currentPlay[0].datetime.split(" ")[1]}~{currentPlay[0].datetime2.split(" ")[1]}<br/>
                     球場位置：{currentPlay[0].location}<br/>
-                    球場面數：??<br/>
+                    球場面數：{currentPlay[0].count_courts}<br/>
                     備註：{currentPlay[0].note}
                   </Typography>
                 </>}

@@ -191,7 +191,6 @@ function Playdate({updateBodyBlock, showConfirmModelStatus}) {
                   打球日期：{cards[0].datetime.split(" ")[0]}<br/>
                   打球時間：{cards[0].datetime.split(" ")[1]}~{cards[0].datetime2.split(" ")[1]}<br/>
                   球場位置：{cards[0].location}<br/>
-                  {/* 球場面數：??<br/> */}
                   備註：{cards[0].note}
                 </Typography>
               </>}

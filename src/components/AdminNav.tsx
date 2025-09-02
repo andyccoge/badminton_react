@@ -51,11 +51,11 @@ function ResponsiveAppBar() {
         <Container maxWidth="xl">
           <Toolbar disableGutters variant="dense"
             sx={{display:'flex', justifyContent:'space-between'}}>
-            <Box sx={{ display: { xs: 'none', md: 'flex', width:'40px' }, mr: 1 }}
-              component="img"
-              alt="羽球排場系統"
-              src={LogoIcon}
-            ></Box>
+            <Box sx={{ display: { xs: 'none', md: 'flex', width:'40px' }, mr: 1 }}>
+              <Link to="/">
+                <Box component="img" alt="羽球排場系統" src={LogoIcon}></Box>
+              </Link>
+            </Box>
 
             <Box sx={{ flexGrow: 0, display: { xs: 'flex', md: 'none' } }}>
               <IconButton
@@ -94,11 +94,11 @@ function ResponsiveAppBar() {
               </Menu>
             </Box>
 
-            <Box sx={{ display: { xs: 'flex', md: 'none', width:'40px' }, mr: 1 }}
-              component="img"
-              alt="羽球排場系統"
-              src={LogoIcon}
-            ></Box>
+            <Box sx={{ display: { xs: 'flex', md: 'none', width:'40px' }, mr: 1 }}>
+              <Link to="/">
+                <Box component="img" alt="羽球排場系統" src={LogoIcon}></Box>
+              </Link>
+            </Box>
 
             <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
               {pages.map((page) => (
