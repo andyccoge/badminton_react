@@ -67,6 +67,7 @@ function Main() {
             <Routes>
               {/* 預設首頁跳轉至「打球日管理」 */}
               <Route path="/" element={<Playdates updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}/>} />
+              <Route path="/index.html" element={<Playdates updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}/>} />
 
               <Route path="/playdates" element={<Playdates updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}/>} />
               <Route path="/users" element={<Users updateBodyBlock={updateBodyBlock} showConfirmModelStatus={showConfirmModelStatus}/>} />
