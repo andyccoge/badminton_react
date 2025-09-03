@@ -143,3 +143,6 @@ export const Transition = React.forwardRef(function Transition(
 ) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
+
+/*檢查場上人員是否皆未設定*/
+export const isEmptyIdx = (arr: number[]) => arr.length === 4 && arr.every(x => x === -1);

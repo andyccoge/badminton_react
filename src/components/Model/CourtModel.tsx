@@ -13,7 +13,7 @@ export type MyChildRef = { // 子暴露方法給父
   setModel: (idx, item, primaryKey?) => void;
 };
 type MyChildProps = { // 父傳方法給子
-  updateBodyBlock: (status) => void;
+  updateBodyBlock: (status:boolean) => void;
   reGetList: () => void;
   renewList: (idx, item) => void;
   checkEditable?: (idx, item) => string;

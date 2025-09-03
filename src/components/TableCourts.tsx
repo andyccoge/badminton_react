@@ -73,7 +73,7 @@ export type MyChildRef = { // 子暴露方法給父
   setModel: (idx, item, primaryKey?) => void;
 };
 type MyChildProps = { // 父傳方法給
-  updateBodyBlock: (status) => void;
+  updateBodyBlock: (status:boolean) => void;
   showConfirmModelStatus: (
     title: string,
     message: string,

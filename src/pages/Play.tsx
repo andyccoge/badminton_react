@@ -10,18 +10,18 @@ import {Skeleton} from '@mui/material';
 import BottomNavigation, {MyChildRef as BottomNavigationMyChildRef} from '../components/BottomNavigation';
 import Court, {MyChildRef as CourtMyChildRef} from '../components/Court';
 import UserModel, {MyChildRef as UserModelMyChildRef} from '../components/Model/UserModel';
-import ReservationDrawer, {MyChildRef as ReservationDrawerMyChildRef} from '../components/ReservationDrawer';
-import { Data as CourtData } from '../components/TableCourts.tsx';
+import ReservationDrawer, {MyChildRef as ReservationDrawerMyChildRef, PlayReservationsType} from '../components/ReservationDrawer';
+import { Data as CourtData, CourtPlayData } from '../components/TableCourts.tsx';
 import { Data as MatchData } from '../components/TableMatchs.tsx';
 
 const vertical=true; /* true false */
 
-const initCourt = (court:any) => {
-  court.duration = 0; /*持續時間*/
-  /*場上人員index(對應主資料)*/
-  const usersIdxList:number[] = [-1,-1,-1,-1];
-  court.usersIdx = usersIdxList;
-  return court;
+const initCourt = (court:CourtData):CourtPlayData => {
+  return {
+    ...court,
+    duration: 0, /*持續時間*/
+    usersIdx: [-1, -1, -1, -1], /*場上人員index(對應主資料)*/
+  };
 }
 const initCourtUser = (user:any) => {
   user.waitNum = 0;
@@ -40,9 +40,9 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
   const play_date_id:string | null = searchParams.get('id') || '0';
 
   const [initFinished, setInitFinished] = React.useState(false);
-  const [courts, setCourts] = React.useState<any[]>([]);
+  const [courts, setCourts] = React.useState<CourtPlayData[]>([]);
   const [cards, setCards] = React.useState<any[]>([]);
-  const [reservations, setReservations] = React.useState<any[]>([]);
+  const [reservations, setReservations] = React.useState<PlayReservationsType[]>([]);
 
   /*在比賽場中的球員idx(有紀錄表示在比賽中)*/
   const [userIdxMatch, setUserIdxMatch] = React.useState<number[]>([]);
@@ -91,7 +91,7 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
     setUserIdxMatch(newUserIdxMatch);
     return newUserIdxMatch;
   };
-  const updateUserIdxPrepare = (excludeCourtIndex:number, include:number[]=[]):number[] => {
+  const updateUserIdxPrepare = (excludeCourtIndex:number, include:number[]=[]):number[][] => {
     // 拿出 要排除場地(excludeCourtIndex) 之前的 type==2 的場地的設定球員idx
     const preserved = excludeCourtIndex>=0 ? courts
           .slice(0, excludeCourtIndex)
@@ -100,13 +100,13 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
     // 拿出 要排除場地(excludeCourtIndex) 之後的 type==2 的場地的設定球員idx
     const toShift = courts
       .slice(excludeCourtIndex+1)
-      .filter(cc => cc.type === 2)
+      .filter(cc => cc.type === 2 && !functions.isEmptyIdx(cc.usersIdx))
       .map(cc => cc.usersIdx);
     // 合併要放回的 idxs
-    const newIdxList = [...preserved, ...toShift].flat().filter(cc => cc!=-1).concat(include);
+    const newCourtsusersIdx = [...preserved, ...toShift]; /*依照場次紀錄各個場的安排球員們*/
     /*排除-1、添加新預備球員，並設定新預備球員紀錄*/
-    setUserIdxPrepare(newIdxList);
-    return newIdxList;
+    setUserIdxPrepare(newCourtsusersIdx.flat().filter(cc => cc!=-1).concat(include));
+    return newCourtsusersIdx;
   }
 
   React.useEffect(() => {
@@ -292,12 +292,10 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
     }
   }
   const renewCourts = (items:CourtData[]) => {
-    items = items.map((item, idx)=>{
-      if(idx>=courts.length){ item = initCourt(item); }
-      else{ item = {...courts[idx], ...item}; }
-      return item;
+    const items2:CourtPlayData[] = items.map((item, idx)=>{
+      return idx>=courts.length ? initCourt(item) : {...courts[idx], ...item};
     });
-    setCourts(items);
+    setCourts(items2);
   };
   const renewCourt = (idx:number, item:CourtData) => {
     if(courts[idx].type==1 && item.type==2){ /*從比賽轉預備*/
@@ -335,8 +333,8 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
   return (   
     <>
       {/* <Button onClick={()=>{
-        // console.log(userIdxMatch, userIdxPrepare, userIdxMatchCode,reservations)
-        // console.log(courts)
+        console.log(userIdxMatch, userIdxPrepare, userIdxMatchCode,reservations)
+        console.log(courts)
       }}>test</Button> */}
       <Box sx={{pb:'0.5rem'}}></Box>
       {/* 比賽場 */}
@@ -350,7 +348,7 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
                       court_idx={court_idx}
                       courts={courts}
                       clickCourt={clickCourt}
-                      users={reservations}
+                      reservations={reservations}
                       clickUserName={clickCourtUserName(court_idx)}
                       vertical={vertical}
                       userIdxMatch={userIdxMatch}
@@ -358,7 +356,7 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
                       setCourts={setCourts}
                       updateUserIdxMatchCode={updateUserIdxMatchCode}
                       updateUserIdxPrepare={updateUserIdxPrepare}
-                      setUsers={setReservations}
+                      setReservations={setReservations}
                       setUserShowUp={setUserShowUp}
                       setUserLeave={setUserLeave}
                       setUserModel={setUserModel}
@@ -384,7 +382,7 @@ function Play({updateBodyBlock, showConfirmModelStatus}) {
                       court_idx={court_idx}
                       courts={courts}
                       clickCourt={clickCourt}
-                      users={reservations}
+                      reservations={reservations}
                       clickUserName={clickCourtUserName(court_idx)}
                       vertical={vertical}
                       userIdxMatch={userIdxMatch}

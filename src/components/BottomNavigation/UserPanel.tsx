@@ -10,7 +10,7 @@ import UserNameCard, {MyChildRef as UserNameCardMyChildRef, UserType} from '../.
 export type MyChildRef = { // 子暴露方法給父
 };
 type MyChildProps = { // 父傳方法給子
-  updateBodyBlock: (status) => void;
+  updateBodyBlock: (status:boolean) => void;
   users?:UserType[];
   doSelectUser?: (userIdx:number) => void;
   setUserShowUp?: (idx:number) => void;

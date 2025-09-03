@@ -80,7 +80,7 @@ export type MyChildRef = { // 子暴露方法給父
   goSearch: () => void;
 };
 type MyChildProps = { // 父傳方法給
-  updateBodyBlock: (status) => void;
+  updateBodyBlock: (status:boolean) => void;
   getData: (where:any) => void;
   clickFirstCell:(idx:number, item:any) => void;
   where?: {},

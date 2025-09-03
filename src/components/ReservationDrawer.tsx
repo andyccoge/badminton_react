@@ -17,7 +17,17 @@ export interface ReservationsType {
   show_up: number,
   paid: number,
   leave: number,
+}
+const empty_data:ReservationsType = {
+  id:'-1',
+  play_date_id: '0',
+  user_id: 0,
+  show_up: 0,
+  paid: 0,
+  leave: 0,
+}
 
+export interface PlayReservationsType extends ReservationsType{
   name: string,
   name_nick: string,
   name_line: string,
@@ -30,21 +40,27 @@ export interface ReservationsType {
   waitNum: number,
   groupNumber: number,
 }
-const empty_data = {
-  "id":-1,
-  "play_date_id": 0,
-  "user_id": 0,
-  "show_up": 0,
-  "paid": 0,
-  "leave": 0,
+const empty_data_play:PlayReservationsType = {
+  ...empty_data,
+  name: '',
+  name_nick: '',
+  name_line: '',
+  email: '',
+  cellphone: 0,
+  gender: 0,
+  level: 0,
+
+  courtNum: 0,
+  waitNum: 0,
+  groupNumber: 0,
 }
 
 export type MyChildRef = { // 子暴露方法給父
   setModel: (idx, item, primaryKey?) => void;
 };
 type MyChildProps = { // 父傳方法給子
-  updateBodyBlock: (status) => void;
-  reservations: ReservationsType[];
+  updateBodyBlock: (status:boolean) => void;
+  reservations: PlayReservationsType[];
   setReservations: (items:any) => void;
   setUserModel?: (idx:number, item:any) => void;
 };
@@ -67,6 +83,10 @@ const ReservationDrawer = React.forwardRef<MyChildRef, MyChildProps>((
   const [open, setOpen] = React.useState(false);
   const [primaryId, setPrimaryId] = React.useState(0);
   const [index, setIndex] = React.useState(-1);
+  const [reservation, change] = React.useState<PlayReservationsType>({} as PlayReservationsType);
+  React.useEffect(() => {
+    change( (index>0&&index<reservations.length)?reservations[index]:{} as PlayReservationsType)
+  }, [index]);
   const handleSwitch = (event: React.ChangeEvent<HTMLInputElement>) => {
     let saveData = null;
     setReservations(prev => (
@@ -116,20 +136,20 @@ const ReservationDrawer = React.forwardRef<MyChildRef, MyChildProps>((
         <Divider sx={{m:'10px 0'}}/>
         <Stack>
           <Typography variant='subtitle1'>
-            <b>{reservations[index]?.name}</b>
-            {reservations[index]?.gender ? (reservations[index]?.gender==1?'♂️':'♀️') : '❔'}
+            <b>{reservation.name}</b>
+            {reservation.gender ? (reservation.gender==1?'♂️':'♀️') : '❔'}
           </Typography>
-          <Typography variant='body2'>綽號:{reservations[index]?.name_nick}</Typography>
-          <Typography variant='body2'>LINE名稱:{reservations[index]?.name_line}</Typography>
-          <Typography variant='body2'>Email:{reservations[index]?.email}</Typography>
-          <Typography variant='body2'>手機:{reservations[index]?.cellphone}</Typography>
+          <Typography variant='body2'>綽號:{reservation.name_nick}</Typography>
+          <Typography variant='body2'>LINE名稱:{reservation.name_line}</Typography>
+          <Typography variant='body2'>Email:{reservation.email}</Typography>
+          <Typography variant='body2'>手機:{reservation.cellphone}</Typography>
           <Typography variant='body2'>
-            <em>⭐:</em>{reservations[index]?.level}&nbsp;&nbsp;{/* 等級 */}
-            <em>🎌:</em>{reservations[index]?.courtNum || 0}&nbsp;&nbsp;{/* 比賽場數 */}
-            <em>💤:</em>{reservations[index]?.waitNum || 0}{/* 等待 */}
+            <em>⭐:</em>{reservation.level}&nbsp;&nbsp;{/* 等級 */}
+            <em>🎌:</em>{reservation.courtNum || 0}&nbsp;&nbsp;{/* 比賽場數 */}
+            <em>💤:</em>{reservation.waitNum || 0}{/* 等待 */}
           </Typography>
           <Box textAlign={'center'} sx={{mt:'10px'}}>
-            <Button size='small' onClick={()=>{if(setUserModel){setUserModel(index, reservations[index])}}}>
+            <Button size='small' onClick={()=>{if(setUserModel){setUserModel(index, reservation)}}}>
               編輯資料 <EditSquareIcon />
             </Button>
           </Box>
@@ -141,13 +161,13 @@ const ReservationDrawer = React.forwardRef<MyChildRef, MyChildProps>((
             <FormControl variant="standard">
               <FormGroup>
                 <FormControlLabel label="報到" control={
-                  <Switch checked={Boolean(reservations[index]?.show_up)} name="show_up" size='small' onChange={handleSwitch}/>
+                  <Switch checked={Boolean(reservation.show_up)} name="show_up" size='small' onChange={handleSwitch}/>
                 }/>
                 <FormControlLabel label="付款" control={
-                  <Switch checked={Boolean(reservations[index]?.paid)} name="paid" size='small' onChange={handleSwitch}/>
+                  <Switch checked={Boolean(reservation.paid)} name="paid" size='small' onChange={handleSwitch}/>
                 }/>
                 {/* <FormControlLabel label="離場" control={
-                  <Switch checked={Boolean(reservations[index]?.leave)} name="leave" size='small' onChange={handleSwitch}/>
+                  <Switch checked={Boolean(reservation.leave)} name="leave" size='small' onChange={handleSwitch}/>
                 }/> */}
               </FormGroup>
             </FormControl>

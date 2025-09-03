@@ -45,7 +45,7 @@ export function showDate(datetime):string{
 export type MyChildRef = { // 子暴露方法給父
 };
 type MyChildProps = { // 父傳方法給子
-  updateBodyBlock: (status) => void;
+  updateBodyBlock: (status:boolean) => void;
   viewPlayDate: (id, idx) => void;
   openPlayDateModel: (id, idx) => void;
   deletePlayDate: (id, idx) => void;

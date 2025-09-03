@@ -23,7 +23,7 @@ type MyChildProps = { // 父傳方法給子
   getData: (where:any) => Promise<{data:PlaydateData[]}>;
   cards: ShowPlaydateData[];
   card_group: {[key: string]:number[]};
-  updateBodyBlock: (status) => void;
+  updateBodyBlock: (status:boolean) => void;
   viewPlayDate: (id, idx) => void;
   openPlayDateModel: (id, idx) => void;
   deletePlayDate: (id, idx) => void;

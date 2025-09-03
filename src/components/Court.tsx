@@ -12,32 +12,28 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 
 import UserNameCard, {MyChildRef as UserNameCardMyChildRef} from '../components/UserNameCard';
-import {ReservationsType} from '../components/ReservationDrawer';
+import { PlayReservationsType } from '../components/ReservationDrawer';
+import { Data as CourtData, CourtPlayData } from '../components/TableCourts.tsx';
 import { Data as MatchData } from '../components/TableMatchs.tsx';
-
-interface CourtType {
-  id:number, code:string, type:number, duration:number,
-  usersIdx:number[],
-}
 
 export type MyChildRef = { // 子暴露方法給父
   getUserNameCards: () => Array<React.RefObject<UserNameCardMyChildRef | null>>;
   scrollToSelf: () => void;
 };
 type MyChildProps = { // 父傳方法給
-  updateBodyBlock: (status) => void;
+  updateBodyBlock: (status:boolean) => void;
   court_idx: number,
-  courts: CourtType[],
+  courts: CourtPlayData[],
   clickCourt: (idx:number) => void;
-  users:ReservationsType[],
+  reservations:PlayReservationsType[],
   clickUserName: (refIdx:number) => void;
   vertical?: boolean,
   userIdxMatch: number[];
   userIdxMatchCode: {};
-  setCourts?: (items:any) => void;
+  setCourts?: React.Dispatch<React.SetStateAction<CourtPlayData[]>>;
   updateUserIdxMatchCode?: (exclude:number[], include:number[], includeCourt:string) => number[];
-  updateUserIdxPrepare?: (excludeCourtIndex:number, include?:number[]) => number[];
-  setUsers?: (items:any) => void;
+  updateUserIdxPrepare?: (excludeCourtIndex:number, include?:number[]) => number[][];
+  setReservations?: React.Dispatch<React.SetStateAction<PlayReservationsType[]>>;
   setUserShowUp?: (idx:number) => void;
   setUserLeave?: (idx:number) => void;
   setUserModel?: (idx:number, item:any) => void;
@@ -48,9 +44,9 @@ type MyChildProps = { // 父傳方法給
 function Court(
   { 
     updateBodyBlock, court_idx, courts, clickCourt,
-    users, clickUserName, vertical=false,
+    reservations, clickUserName, vertical=false,
     userIdxMatch, userIdxMatchCode, setCourts, updateUserIdxMatchCode, updateUserIdxPrepare,
-    setUsers, setUserShowUp, setUserLeave,
+    setReservations, setUserShowUp, setUserLeave,
     setUserModel, setUserDrawer, addMatchs,
   }: MyChildProps,
   ref: React.Ref<MyChildRef>
@@ -85,9 +81,6 @@ function Court(
   const UserNameCardRef3 = React.useRef<UserNameCardMyChildRef>(null);
   const UserNameCardRef4 = React.useRef<UserNameCardMyChildRef>(null);
 
-  /*檢查場上人員是否皆未設定*/
-  const isEmptyIdx = (arr: number[]) => arr.length === 4 && arr.every(x => x === -1);
-
   const changeCourt = async() => {
     updateBodyBlock(true); //顯示遮蓋
     setTimerStop();
@@ -101,10 +94,10 @@ function Court(
     for (let yy = 0; yy < courts.length; yy++) {
       if(courts[yy].type!=2){ continue; } /*跳過非預備的場地*/
       const idxs = courts[yy].usersIdx;
-      if(isEmptyIdx(idxs)){ continue; } /*沒設定人員*/
+      if(functions.isEmptyIdx(idxs)){ continue; } /*沒設定人員*/
       /*檢查場上人員是否重複 或 未報到*/
       const set1 = new Set(userIdxMatch);
-      if(idxs.filter(ss => ss!=-1 && (set1.has(ss) || users[ss].show_up==0)).length > 0){
+      if(idxs.filter(ss => ss!=-1 && (set1.has(ss) || reservations[ss].show_up==0)).length > 0){
         continue;
       }
       nextUsersIdx = JSON.parse(JSON.stringify(idxs));
@@ -122,12 +115,12 @@ function Court(
     if(setCourts){
       setCourts(prev => {
         /*更新預備球員紀錄*/
-        const newIdxList = updateUserIdxPrepare ? updateUserIdxPrepare(nextCourtIdx) : [];
+        const newCourtsusersIdx = updateUserIdxPrepare ? updateUserIdxPrepare(nextCourtIdx) : [];
 
         let shiftPointer = 0;
         return prev.map((ee,eeid) => {
           if (ee.type === 2) {
-            let newIdx = newIdxList[shiftPointer] || [-1,-1,-1,-1];
+            let newIdx = newCourtsusersIdx[shiftPointer] || [-1,-1,-1,-1];
             shiftPointer++;
             return { ...ee, usersIdx: newIdx };
           } else {
@@ -137,11 +130,11 @@ function Court(
       });
     }
 
-    const downEmpty = isEmptyIdx(donwUsersIdx);
-    const nextEmpty = isEmptyIdx(nextUsersIdx);
+    const downEmpty = functions.isEmptyIdx(donwUsersIdx);
+    const nextEmpty = functions.isEmptyIdx(nextUsersIdx);
     /*更改球員等待&比賽場數*/
-    if(setUsers){
-      setUsers(prev =>
+    if(setReservations){
+      setReservations(prev =>
         prev.map((xx, idx) => {
           let waitNum = xx.waitNum ? xx.waitNum : 0;
           let courtNum = xx.courtNum ? xx.courtNum : 0;
@@ -167,14 +160,14 @@ function Court(
     }
 
     /*添加比賽紀錄*/
-    if(!isEmptyIdx(courtUpload.usersIdx)){
+    if(!functions.isEmptyIdx(courtUpload.usersIdx)){
       // console.log(courtUpload);
       const data = {
         id: Math.round(Math.random() * 100000),
-        user_id_1: users[courtUpload.usersIdx[0]] ? users[courtUpload.usersIdx[0]].user_id : null,
-        user_id_2: users[courtUpload.usersIdx[1]] ? users[courtUpload.usersIdx[1]].user_id : null,
-        user_id_3: users[courtUpload.usersIdx[2]] ? users[courtUpload.usersIdx[2]].user_id : null,
-        user_id_4: users[courtUpload.usersIdx[3]] ? users[courtUpload.usersIdx[3]].user_id : null,
+        user_id_1: reservations[courtUpload.usersIdx[0]] ? reservations[courtUpload.usersIdx[0]].user_id : null,
+        user_id_2: reservations[courtUpload.usersIdx[1]] ? reservations[courtUpload.usersIdx[1]].user_id : null,
+        user_id_3: reservations[courtUpload.usersIdx[2]] ? reservations[courtUpload.usersIdx[2]].user_id : null,
+        user_id_4: reservations[courtUpload.usersIdx[3]] ? reservations[courtUpload.usersIdx[3]].user_id : null,
         play_date_id: courtUpload.play_date_id,
         court_id: courtUpload.id,
         duration: courtUpload.duration,
@@ -204,7 +197,7 @@ function Court(
     }
   }
   const setTimerStart = (force=false) => {
-    if(!force && isEmptyIdx(court.usersIdx)){ /*場上沒人員*/
+    if(!force && functions.isEmptyIdx(court.usersIdx)){ /*場上沒人員*/
       showMessage('請先設定球員', 'warning'); return;
     }
     if(setCourts){
@@ -237,7 +230,7 @@ function Court(
               <Stack direction={vertical?'row':'column'} spacing={1} alignItems={'center'} justifyContent={'space-around'}>
                 <UserNameCard updateBodyBlock={updateBodyBlock}
                               user_idx={court.usersIdx[0]}
-                              user={users[court.usersIdx[0]]}
+                              user={reservations[court.usersIdx[0]]}
                               vertical={vertical}
                               userIdxMatch={court.type==1 ? [] : userIdxMatch}
                               matchCourtCode={court.type==1 ? '' : userIdxMatchCode[court.usersIdx[0]]??''}                              
@@ -250,7 +243,7 @@ function Court(
                 ></UserNameCard>
                 <UserNameCard updateBodyBlock={updateBodyBlock}
                               user_idx={court.usersIdx[1]}
-                              user={users[court.usersIdx[1]]}
+                              user={reservations[court.usersIdx[1]]}
                               vertical={vertical}
                               userIdxMatch={court.type==1 ? [] : userIdxMatch}
                               matchCourtCode={court.type==1 ? '' : userIdxMatchCode[court.usersIdx[1]]??''}                              
@@ -276,7 +269,7 @@ function Court(
               <Stack direction={vertical?'row':'column'} spacing={1} alignItems={'center'}>
                 <UserNameCard updateBodyBlock={updateBodyBlock}
                               user_idx={court.usersIdx[2]}
-                              user={users[court.usersIdx[2]]}
+                              user={reservations[court.usersIdx[2]]}
                               vertical={vertical}
                               userIdxMatch={court.type==1 ? [] : userIdxMatch}
                               matchCourtCode={court.type==1 ? '' : userIdxMatchCode[court.usersIdx[2]]??''}                              
@@ -289,7 +282,7 @@ function Court(
                 ></UserNameCard>
                 <UserNameCard updateBodyBlock={updateBodyBlock}
                               user_idx={court.usersIdx[3]}
-                              user={users[court.usersIdx[3]]}
+                              user={reservations[court.usersIdx[3]]}
                               vertical={vertical}
                               userIdxMatch={court.type==1 ? [] : userIdxMatch}
                               matchCourtCode={court.type==1 ? '' : userIdxMatchCode[court.usersIdx[3]]??''}                              

@@ -47,7 +47,7 @@ export type MyChildRef = { // 子暴露方法給父
   getSelectedStatus: () => boolean;
 };
 type MyChildProps = { // 父傳方法給
-  updateBodyBlock: (status) => void;
+  updateBodyBlock: (status:boolean) => void;
   user_idx: number;
   user?: UserType | null;
   vertical?: boolean;

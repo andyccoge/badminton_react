@@ -15,7 +15,7 @@ import UserPanel from './BottomNavigation/UserPanel';
 import TextAreaBatchReservation from '../components/TextAreaBatchReservation.tsx';
 import {UserType} from '../components/UserNameCard';
 import TableCourts, {
-  MyChildRef as TableCourtsMyChildRef, empty_searchForm as emptyCourtSearchForm, Data as CourtData
+  MyChildRef as TableCourtsMyChildRef, empty_searchForm as emptyCourtSearchForm, Data as CourtData, CourtPlayData
 } from '../components/TableCourts.tsx';
 import TableMatchs, {
   MyChildRef as TableMatchsMyChildRef, empty_searchForm as emptyMatchSearchForm, Data as MatchData
@@ -29,7 +29,7 @@ export type MyChildRef = { // 子暴露方法給父
   setCourtDrawerOpenOpen:(status:boolean) => void;
   setMatchDrawerOpenOpen:(status:boolean) => void;
 
-  setCourts:(courts:CourtData[]) => void;
+  setCourts:(courts:CourtPlayData[]) => void;
   setCourtsModel: (idx, item, primaryKey?) => void;
 
   setPlayMatchs:(result:{matchs:MatchData[]; user_map:{[key: string]: UserType}}) => void;
@@ -37,7 +37,7 @@ export type MyChildRef = { // 子暴露方法給父
   getMatchs: () => Array<MatchData>;
 };
 type MyChildProps = { // 父傳方法給子
-  updateBodyBlock: (status) => void;
+  updateBodyBlock: (status:boolean) => void;
   showConfirmModelStatus: (
     title: string,
     message: string,
