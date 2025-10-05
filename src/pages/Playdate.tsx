@@ -1,4 +1,4 @@
-import * as functions from '../functions.tsx';
+import * as functions from '../functions';
 import * as React from 'react';
 import { useSnackbar } from 'notistack';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -16,18 +16,18 @@ import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
 import ScoreboardIcon from '@mui/icons-material/Scoreboard';
 
-import AdminNav from '../components/AdminNav.tsx';
-import TextAreaBatchReservation from '../components/TextAreaBatchReservation.tsx';
+import AdminNav from '../components/AdminNav';
+import TextAreaBatchReservation from '../components/TextAreaBatchReservation';
 import TableUsers, {
   MyChildRef as TableUsersMyChildRef, empty_searchForm as emptyUserSearchForm
-} from '../components/TableUsers.tsx';
+} from '../components/TableUsers';
 import UserModel, {MyChildRef as UserModelMyChildRef} from '../components/Model/UserModel';
 import TableCourts, {
   MyChildRef as TableCourtsMyChildRef, empty_searchForm as emptyCourtSearchForm
-} from '../components/TableCourts.tsx';
+} from '../components/TableCourts';
 import TableMatchs, {
   MyChildRef as TableMatchsMyChildRef, empty_searchForm as emptyMatchSearchForm
-} from '../components/TableMatchs.tsx';
+} from '../components/TableMatchs';
 
 const numPerPage = 0; /*列表一頁顯示數量(0表示不使用分頁功能)*/
 const defaulUsertWhere = emptyUserSearchForm;

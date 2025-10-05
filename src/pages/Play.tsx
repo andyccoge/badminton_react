@@ -1,4 +1,4 @@
-import * as functions from '../functions.tsx'
+import * as functions from '../functions'
 import * as React from 'react';
 import { useSnackbar } from 'notistack';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -11,8 +11,8 @@ import BottomNavigation, {MyChildRef as BottomNavigationMyChildRef} from '../com
 import Court, {MyChildRef as CourtMyChildRef} from '../components/Court';
 import UserModel, {MyChildRef as UserModelMyChildRef} from '../components/Model/UserModel';
 import ReservationDrawer, {MyChildRef as ReservationDrawerMyChildRef, PlayReservationsType} from '../components/ReservationDrawer';
-import { Data as CourtData, CourtPlayData } from '../components/TableCourts.tsx';
-import { Data as MatchData } from '../components/TableMatchs.tsx';
+import { Data as CourtData, CourtPlayData } from '../components/TableCourts';
+import { Data as MatchData } from '../components/TableMatchs';
 
 const vertical=true; /* true false */
 

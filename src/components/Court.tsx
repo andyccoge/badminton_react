@@ -1,4 +1,4 @@
-import * as functions from '../functions.tsx'
+import * as functions from '../functions'
 import * as React from 'react';
 import { useSnackbar } from 'notistack';
 
@@ -13,8 +13,8 @@ import PauseIcon from '@mui/icons-material/Pause';
 
 import UserNameCard, {MyChildRef as UserNameCardMyChildRef} from '../components/UserNameCard';
 import { PlayReservationsType } from '../components/ReservationDrawer';
-import { Data as CourtData, CourtPlayData } from '../components/TableCourts.tsx';
-import { Data as MatchData } from '../components/TableMatchs.tsx';
+import { Data as CourtData, CourtPlayData } from '../components/TableCourts';
+import { Data as MatchData } from '../components/TableMatchs';
 
 export type MyChildRef = { // 子暴露方法給父
   getUserNameCards: () => Array<React.RefObject<UserNameCardMyChildRef | null>>;

@@ -1,4 +1,4 @@
-import * as functions from '../functions.tsx'
+import * as functions from '../functions'
 import * as React from 'react';
 import { useSnackbar } from 'notistack';
 import { styled } from '@mui/material/styles';
@@ -42,7 +42,7 @@ export interface UserType {
 }
 
 export type MyChildRef = { // 子暴露方法給父
-  setSelectedStatus: (status) => void;
+  setSelectedStatus: (status:boolean) => void;
   toggleSelectedStatus: () => void;
   getSelectedStatus: () => boolean;
 };

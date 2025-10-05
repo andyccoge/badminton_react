@@ -6,11 +6,12 @@ import axios from 'axios';
 import {VariantType, closeSnackbar } from 'notistack';
 import CloseIcon from '@mui/icons-material/Close';
 
-const api_main_url = 'https://ll2j8j5jmb.execute-api.ap-northeast-1.amazonaws.com';
-const api_stage = 'default';
+const api_main_url = import.meta.env.VITE_API_URL;
+const api_stage = import.meta.env.VITE_API_STAGE;
 const baseURL = `${api_main_url}/${api_stage}`;
 
 export async function fetchData(method: string, send_target: string, send_data: any = null, send_where: any = null) {
+  console.log();
   const api = axios.create({
     baseURL,
     headers: { 'Content-Type': 'application/json' },
@@ -75,7 +76,7 @@ export function createEnqueueSnackbar(enqueueSnackbar:Function){
     do_function: Function = ()=>{},
   ) => {
     const autoHideDuration = 3000;
-    const action = snackbarId => (
+    const action = (snackbarId:string) => (
       <>
         {do_function_name && do_function && 
           <button onClick={() => { do_function() }} style={{marginRight:'1rem'}}>
@@ -116,7 +117,7 @@ export function getTextareaUserNames(text:string): string[]{
   return names;
 }
 
-export function formatSeconds(totalSeconds) {
+export function formatSeconds(totalSeconds:number) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
@@ -129,7 +130,7 @@ export function formatSeconds(totalSeconds) {
   return result;
 }
 
-export const middleEllipsis = (str, frontLen = 7, backLen = 0) => {
+export const middleEllipsis = (str:string|undefined, frontLen = 7, backLen = 0) => {
   if(!str){return ''}
   if (str.length <= frontLen + backLen) return str;
   return str.slice(0, frontLen) + "..." + (backLen?str.slice(-backLen):'');

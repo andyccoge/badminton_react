@@ -12,6 +12,8 @@ frontend:
     build:
       commands:
         - npm run build
+        - echo "VITE_API_URL=$VITE_API_URL" >> .amplify-hosting/compute/default/.env
+        - echo "VITE_API_STAGE=$VITE_API_STAGE" >> .amplify-hosting/compute/default/.env
   artifacts:
     baseDirectory: dist
     files:

@@ -1,4 +1,4 @@
-import * as functions from '../functions.tsx';
+import * as functions from '../functions';
 import * as React from 'react';
 import { useSnackbar } from 'notistack';
 
@@ -9,10 +9,10 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import Fab from '@mui/material/Fab';
 import AddIcon from '@mui/icons-material/Add';
 
-import AdminNav from '../components/AdminNav.tsx'
+import AdminNav from '../components/AdminNav'
 import TableUsers, {
   MyChildRef as TableUsersMyChildRef, empty_searchForm as emptyUserSearchForm
-} from '../components/TableUsers.tsx';
+} from '../components/TableUsers';
 import UserModel, {MyChildRef as UserModelMyChildRef} from '../components/Model/UserModel';
 
 import {Dialog,DialogActions,DialogContent,DialogContentText,DialogTitle} from '@mui/material';

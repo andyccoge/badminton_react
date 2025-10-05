@@ -1,4 +1,4 @@
-import * as functions from '../../functions.tsx';
+import * as functions from '../../functions';
 import * as React from 'react';
 import { useSnackbar } from 'notistack';
 
@@ -6,7 +6,7 @@ import Button from '@mui/material/Button';
 import {Dialog,DialogActions,DialogContent,DialogContentText,DialogTitle} from '@mui/material';
 import {TextField, Stack, Grid} from '@mui/material';
 
-import { Data as PlaydateData } from "../../components/PlaydateCard.tsx";
+import { Data as PlaydateData } from "../../components/PlaydateCard";
 
 export type MyChildRef = { // 子暴露方法給父
   setModel: (idx, item, primaryKey?) => void;

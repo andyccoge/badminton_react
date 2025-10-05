@@ -1,4 +1,4 @@
-import * as functions from '../functions.tsx';
+import * as functions from '../functions';
 import * as React from 'react';
 import { useSnackbar } from 'notistack';
 
@@ -12,14 +12,14 @@ import {Dialog,DialogContent,DialogTitle} from '@mui/material';
 
 import Menu from './BottomNavigation/Menu';
 import UserPanel from './BottomNavigation/UserPanel';
-import TextAreaBatchReservation from '../components/TextAreaBatchReservation.tsx';
+import TextAreaBatchReservation from '../components/TextAreaBatchReservation';
 import {UserType} from '../components/UserNameCard';
 import TableCourts, {
   MyChildRef as TableCourtsMyChildRef, empty_searchForm as emptyCourtSearchForm, Data as CourtData, CourtPlayData
-} from '../components/TableCourts.tsx';
+} from '../components/TableCourts';
 import TableMatchs, {
   MyChildRef as TableMatchsMyChildRef, empty_searchForm as emptyMatchSearchForm, Data as MatchData
-} from '../components/TableMatchs.tsx';
+} from '../components/TableMatchs';
 
 
 const numPerPage = 0; /*列表一頁顯示數量(0表示不使用分頁功能)*/
